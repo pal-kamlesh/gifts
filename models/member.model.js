@@ -10,7 +10,7 @@ const memberSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    area: {
+    location: {
       type: String,
     },
     phone: {
@@ -18,7 +18,7 @@ const memberSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    site: {
+    info: {
       type: String,
       required: true,
     },
@@ -28,11 +28,68 @@ const memberSchema = new mongoose.Schema(
     dob: {
       type: Date,
     },
+    gift1: {
+      type: String,
+    },
+    gift2: {
+      type: String,
+    },
+    gift3: {
+      type: String,
+    },
+    employeeName: String,
+    delivered: Boolean,
+    received: Boolean,
+    deliveryDate: Date,
     isArchived: Boolean,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
-const Member = mongoose.model("Member", memberSchema);
+const MemberHistorySchema = new mongoose.Schema({
+  memberId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Member",
+    required: true,
+  },
+  changes: [
+    {
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+      oldState: {
+        type: mongoose.Schema.Types.Mixed,
+        required: true,
+      },
+      message: {
+        type: String,
+        required: true,
+      },
+      author: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
+});
 
-export default Member;
+memberSchema.virtual("history", {
+  ref: "MemberHistory",
+  localField: "_id",
+  foreignField: "memberId",
+  justOne: true,
+});
+
+const Member = mongoose.model("Member", memberSchema);
+const MemberHistory = mongoose.model("MemberHistory", MemberHistorySchema);
+
+export { Member, MemberHistory };

@@ -91,7 +91,7 @@ export default function User() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto ">
+    <div className="w-full mx-auto p-4 ">
       <div className=" mt-3 h-full">
         <div className="h-16 text-lg flex items-center justify-between font-medium bg-[#6FDCE3] border border-black rounded-tl-lg rounded-br-lg">
           <div className="flex-grow mr-4 ">

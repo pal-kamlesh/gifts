@@ -72,7 +72,7 @@ export default function Header() {
         </Navbar.Collapse>
       ) : (
         <Navbar.Collapse>
-          <Link to="/">
+          {/* <Link to="/">
             <Navbar.Link active={location.pathname === "/"} as={"div"}>
               Home
             </Navbar.Link>
@@ -81,7 +81,7 @@ export default function Header() {
             <Navbar.Link as={"div"} active={location.pathname === "/user"}>
               User
             </Navbar.Link>
-          </Link>
+          </Link> */}
           {/* <Navbar.Link as={"div"}>Contact</Navbar.Link>
           <Navbar.Link as={"div"}>About</Navbar.Link> */}
         </Navbar.Collapse>

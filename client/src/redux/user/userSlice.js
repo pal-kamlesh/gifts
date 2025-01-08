@@ -143,6 +143,28 @@ export const getAllMembers = createAsyncThunk(
     }
   }
 );
+export const handleSelectMember = createAsyncThunk(
+  "select/member",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/v1/member/${data.id}/select`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
+
 export const addMember = createAsyncThunk(
   "add/members",
   async (data, { rejectWithValue }) => {
@@ -193,6 +215,9 @@ export const userSlice = createSlice({
     handleLogout: (state) => {
       state.currentUser = null;
       window.localStorage.removeItem("persist:root");
+    },
+    signoutSuccess: (state) => {
+      state.currentUser = null;
     },
   },
   extraReducers: (builder) => {
@@ -250,24 +275,21 @@ export const userSlice = createSlice({
       .addCase(addMember.rejected, (state) => {
         state.loading = false;
         //toast.error(payload);
+      })
+      .addCase(handleSelectMember.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(handleSelectMember.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(handleSelectMember.rejected, (state) => {
+        state.loading = false;
+        //toast.error(payload);
       });
   },
 });
 
 // Action creators are generated for each case reducer function
-export const {
-  signInStart,
-  signInSuccess,
-  signInFailure,
-  updateStart,
-  updateSuccess,
-  updateFailure,
-  deleteUserStart,
-  deleteUserFailure,
-  deleteUserSuccess,
-  signoutSuccess,
-  updateMeals,
-  handleLogout,
-} = userSlice.actions;
+export const { handleLogout, signoutSuccess } = userSlice.actions;
 
 export default userSlice.reducer;

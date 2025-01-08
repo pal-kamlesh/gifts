@@ -1,18 +1,35 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { shouldDisable } from "../functiion";
+import { useEffect, useState } from "react";
+import { handleSelectMember } from "../redux/user/userSlice";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 // eslint-disable-next-line react/prop-types
-const ExcelTable = ({ members, fn }) => {
+const ExcelTable = ({ members, fn, filterSetMember }) => {
   const { currentUser } = useSelector((state) => state.user);
-
+  const [tab, setTab] = useState("");
+  const dispatch = useDispatch();
   function handleEdit(id) {
-    console.log(id);
     fn(id);
   }
 
   // Utility function to check if a field should be hidden
   const isFieldDisabled = (field) => shouldDisable(currentUser.rights, field);
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const tabFromUrl = urlParams.get("tab");
+    if (tabFromUrl) {
+      setTab(tabFromUrl);
+    }
+  }, [location.search]);
+  async function selectMember(id) {
+    const result = await dispatch(handleSelectMember({ id }));
+    const data = unwrapResult(result);
+    if (data) {
+      filterSetMember(id, data.member);
+    }
+  }
   return (
     <div className="overflow-auto my-3 mx-auto w-11/12">
       <table className="w-full border-collapse border border-gray-400 shadow-lg">
@@ -48,7 +65,7 @@ const ExcelTable = ({ members, fn }) => {
                 Info
               </th>
             )}
-            {!isFieldDisabled("gifts") && (
+            {!isFieldDisabled("gift1") && (
               <th className="border border-gray-400 px-4 py-2 text-left">
                 Gifts
               </th>
@@ -68,9 +85,14 @@ const ExcelTable = ({ members, fn }) => {
                 Company
               </th>
             )}
-            {!isFieldDisabled("action") && (
+            {tab !== "selection" && (
               <th className="border border-gray-400 px-4 py-2 text-left">
-                Action
+                Actions
+              </th>
+            )}
+            {tab === "selection" && (
+              <th className="border border-gray-400 px-4 py-2 text-left">
+                {`Selct for ${new Date().getFullYear()}`}
               </th>
             )}
           </tr>
@@ -88,7 +110,7 @@ const ExcelTable = ({ members, fn }) => {
               )}
               {!isFieldDisabled("dob") && (
                 <td className="border border-gray-400 px-4 py-2">
-                  {member.dob}
+                  {new Date(member.dob).toISOString().split("T")[0]}
                 </td>
               )}
               {!isFieldDisabled("address") && (
@@ -101,21 +123,21 @@ const ExcelTable = ({ members, fn }) => {
                   {member.phone}
                 </td>
               )}
-              {!isFieldDisabled("area") && (
+              {!isFieldDisabled("location") && (
                 <td className="border border-gray-400 px-4 py-2">
-                  {member.area}
+                  {member.location}
                 </td>
               )}
-              {!isFieldDisabled("site") && (
+              {!isFieldDisabled("info") && (
                 <td className="border border-gray-400 px-4 py-2">
-                  {member.site}
+                  {member.info}
                 </td>
               )}
-              {!isFieldDisabled("gifts") && (
+              {!isFieldDisabled("gift1") && (
                 <td className="border border-gray-400 px-4 py-2">
-                  <span className="mr-2">{member.gifts.gift1}</span>
-                  <span className="mr-2">{member.gifts.gift2}</span>
-                  <span className="mr-2">{member.gifts.gift3}</span>
+                  <span className="mr-2">{member?.gifts?.gift1}</span>
+                  <span className="mr-2">{member?.gifts?.gift2}</span>
+                  <span className="mr-2">{member?.gifts?.gift3 ?? ""}</span>
                 </td>
               )}
               {!isFieldDisabled("giftGiven") && (
@@ -133,10 +155,22 @@ const ExcelTable = ({ members, fn }) => {
                   {member.company}
                 </td>
               )}
-              {!isFieldDisabled("action") && (
+
+              {tab !== "selection" && (
                 <td className="border border-gray-400 px-4 py-2">
                   <button onClick={() => handleEdit(member._id)}>Edit</button>
                 </td>
+              )}
+              {tab === "selection" && (
+                <th className="border border-gray-400 px-4 py-2 text-left ">
+                  <div className="flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={member.selected}
+                      onChange={() => selectMember(member._id)}
+                    />
+                  </div>
+                </th>
               )}
             </tr>
           ))}

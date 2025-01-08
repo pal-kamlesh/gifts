@@ -27,6 +27,11 @@ const allowdInput = {
     "recived",
     "company",
     "info",
+    "employeeName",
+    "delivered",
+    "received",
+    "deliveryDate",
+    "isArchived",
   ],
 };
 
@@ -34,7 +39,6 @@ function shouldDisable(rights, name) {
   const trueKeys = Object.keys(rights).filter((key) => rights[key] === true);
   for (let i = 0; i < trueKeys.length; i++) {
     if (allowdInput[String(trueKeys[i])].includes(name)) {
-      console.log(allowdInput[String(trueKeys[i])]);
       return false;
     } else {
       return true;
