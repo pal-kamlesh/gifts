@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "flowbite-react";
 import { ExcelTable } from "../components/index.js";
-import { addMember, getAllMembers } from "../redux/user/userSlice.js";
+import {
+  addMember,
+  getAllMembers,
+  updateMember,
+} from "../redux/user/userSlice.js";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { shouldDisable } from "../functiion.js";
 
 const initalMember = {
@@ -35,7 +39,16 @@ export default function MembersManagement() {
   const [member, setMember] = useState(initalMember);
   const [demoMembers, setDemoMembers] = useState([]);
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const [tab, setTab] = useState("");
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const tabFromUrl = urlParams.get("tab");
+    if (tabFromUrl) {
+      setTab(tabFromUrl);
+    }
+  }, [location.search]);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -99,12 +112,24 @@ export default function MembersManagement() {
       ...member,
       dob: new Date(member.dob).toISOString().split("T")[0],
     });
+    setDemoMembers(demoMembers.filter((member) => member._id !== id));
     setOpen(true);
-    setToUpdate(!toUpdate);
+    setToUpdate(true);
   }
   function filterSetMember(id, newMember) {
     const members = demoMembers.filter((prev) => prev._id !== id);
     setDemoMembers([...members, newMember]);
+  }
+  async function submitUpdate(id, member) {
+    setLoading(true);
+    const result = await dispatch(updateMember({ id, member }));
+    const data = unwrapResult(result);
+    console.log(data);
+    setDemoMembers((prev) => [...prev, data.member]);
+    setLoading(false);
+    setMember(initalMember);
+    setOpen(false);
+    setToUpdate(false);
   }
   return (
     <div className=" w-full flex justify-center h-screen bg-gray-200">
@@ -320,9 +345,13 @@ export default function MembersManagement() {
 
                   <div className="mt-4 flex justify-center gap-3">
                     <button
-                      type="submit"
                       disabled={loading}
                       className="w-full max-w-xs rounded bg-purple-600 py-2 text-white hover:bg-purple-700 disabled:opacity-50"
+                      onClick={
+                        toUpdate
+                          ? () => submitUpdate(member._id, member)
+                          : () => handleSubmit()
+                      }
                     >
                       {loading ? (
                         <>
@@ -338,19 +367,30 @@ export default function MembersManagement() {
                     <button
                       disabled={loading}
                       className="w-full max-w-xs rounded bg-purple-600 py-2 text-white hover:bg-purple-700 disabled:opacity-50"
-                      onClick={() => [setOpen(!open), setMember(initalMember)]}
+                      onClick={() =>
+                        !toUpdate
+                          ? [
+                              setOpen(false),
+                              setMember(initalMember),
+                              setToUpdate(false),
+                            ]
+                          : [
+                              setDemoMembers((data) => [...data, member]),
+                              setMember(initalMember),
+                              setOpen(false),
+                              setToUpdate(false),
+                            ]
+                      }
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
-
-                {/* Submit and Cancel Buttons */}
               </form>
             )}
           </div>
         </div>
-        {!open && (
+        {!open && tab === "members" && (
           <div className="mt-4 flex justify-center">
             <button
               className="w-full max-w-xs rounded bg-purple-600 py-2 text-white hover:bg-purple-700 disabled:opacity-50"

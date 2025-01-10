@@ -90,6 +90,27 @@ export const updateUser = createAsyncThunk(
     }
   }
 );
+export const updateMember = createAsyncThunk(
+  "update/member",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/v1/member/${data.id}/edit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
 export const getUsers = createAsyncThunk(
   "get/users",
   async (data, { rejectWithValue }) => {
@@ -283,6 +304,16 @@ export const userSlice = createSlice({
         state.loading = false;
       })
       .addCase(handleSelectMember.rejected, (state) => {
+        state.loading = false;
+        //toast.error(payload);
+      })
+      .addCase(updateMember.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateMember.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(updateMember.rejected, (state) => {
         state.loading = false;
         //toast.error(payload);
       });

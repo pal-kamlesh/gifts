@@ -12,7 +12,7 @@ import {
 const router = Router();
 
 router.post("/login", login);
-router.post("/register", verifyToken, register);
+router.post("/register", register);
 router.post("/logout", verifyToken, logout);
 router.get("/", verifyToken, users);
 router.delete("/:id", verifyToken, deleteUser);

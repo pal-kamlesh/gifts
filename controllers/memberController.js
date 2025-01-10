@@ -56,17 +56,19 @@ export const addMember = async (req, res, next) => {
 };
 
 export const getMember = async (req, res, next) => {
+  //send members with slected field set
   try {
     const members = await Member.find();
-    const selectedMembers = await Selected.findOne({}).limit(1);
-    const selectedMemberIds = new Set(
-      selectedMembers.selededMember.map((item) => item.memberId)
-    );
+    const sM = await Selected.findOne({}).limit(1);
+    const selectedMemberIds = sM
+      ? new Set(sM.selectedMembers.map((item) => item.memberId.toString()))
+      : new Set([]);
+    console.log(selectedMemberIds);
     const memberWithSelctionStatus = members.map((member) => ({
       ...member.toObject(),
-      selected: selectedMemberIds.has(member._id),
+      selected: selectedMemberIds.has(member._id.toString()),
     }));
-
+    console.log(memberWithSelctionStatus);
     res
       .status(200)
       .json({ message: "all members", data: memberWithSelctionStatus });
@@ -76,7 +78,7 @@ export const getMember = async (req, res, next) => {
 };
 export const deleteMember = async (req, res, next) => {};
 
-export const update = async (req, res, next) => {
+export const updateMember = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -89,10 +91,25 @@ export const update = async (req, res, next) => {
       gift1,
       gift2,
       gift3,
-      giftGiven,
-      recived,
       company,
-    } = req.body;
+    } = req.body.member;
+    let oldMember = await Member.findById(id);
+    if (!oldMember) {
+      res.status(404).json({ message: "No such member found!" });
+    }
+    oldMember.name = name;
+    oldMember.dob = dob;
+    oldMember.address = address;
+    oldMember.phone = phone;
+    oldMember.location = location;
+    oldMember.info = info;
+    oldMember.gift1 = gift1;
+    oldMember.gift2 = gift2;
+    oldMember.gift3 = gift3;
+    oldMember.company = company;
+
+    await oldMember.save();
+    res.status(200).json({ message: "Member updated", member: oldMember });
   } catch (error) {
     next(error);
   }
@@ -103,31 +120,22 @@ export const selectMember = async (req, res, next) => {
     const { id } = req.params;
     const currentYear = new Date().getFullYear();
     const currentYearList = await Selected.findOne({ year: currentYear });
-    console.log(currentYearList.selectedMember);
     if (!currentYearList) {
       const newSelected = new Selected({
         year: currentYear,
-        selectedMember: [id],
+        selectedMembers: [{ memberId: id }],
       });
       await newSelected.save();
     } else {
-      // Step 1: Extract existing memberId into a Set
-      const memberIdSet = new Set(
-        currentYearList.selectedMember.map((member) =>
-          member.memberId.toString()
-        )
-      );
-
-      // Step 2: Check if the id is already in the Set
-      if (!memberIdSet.has(id.toString())) {
-        // Step 3: Add the new member to the array
-        currentYearList.selectedMember.push({ memberId: id });
-
-        // Save the updated document
-        await currentYearList.save();
-      }
+      currentYearList.selectedMembers.push({ memberId: id });
+      await currentYearList.save();
     }
-    res.status(200).json({ message: "Member selected", memb });
+    let member = await Member.findById(id);
+    member = {
+      ...member.toObject(),
+      selected: true,
+    };
+    res.status(200).json({ message: "Member selected", member });
   } catch (error) {
     next(error);
   }

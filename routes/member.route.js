@@ -4,7 +4,7 @@ import {
   addMember,
   getMember,
   selectMember,
-  update,
+  updateMember,
 } from "../controllers/memberController.js";
 
 const router = express.Router();
@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/add", verifyToken, addMember);
 router.get("/get", verifyToken, getMember);
 // router.delete("/deletemeal/:mealId/:userId", verifyToken, deleteMeal);
-router.put(`/:id/edit`, verifyToken, update);
+router.post(`/:id/edit`, verifyToken, updateMember);
 router.post(`/:id/select`, verifyToken, selectMember);
 
 export default router;

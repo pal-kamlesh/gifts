@@ -135,9 +135,9 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
               )}
               {!isFieldDisabled("gift1") && (
                 <td className="border border-gray-400 px-4 py-2">
-                  <span className="mr-2">{member?.gifts?.gift1}</span>
-                  <span className="mr-2">{member?.gifts?.gift2}</span>
-                  <span className="mr-2">{member?.gifts?.gift3 ?? ""}</span>
+                  <span className="mr-2 block">{member?.gift1}</span>
+                  <span className="mr-2 block">{member?.gift2}</span>
+                  <span className="mr-2 block">{member?.gift3}</span>
                 </td>
               )}
               {!isFieldDisabled("giftGiven") && (
