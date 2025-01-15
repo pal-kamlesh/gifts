@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 const initialState = {
   currentUser: null,
   allUsers: [],
+  allMembers: [],
   error: null,
   loading: false,
 };
@@ -185,6 +186,27 @@ export const handleSelectMember = createAsyncThunk(
     }
   }
 );
+export const handleUnSelectMember = createAsyncThunk(
+  "unselect/member",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/v1/member/${data.id}/unselect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
 
 export const addMember = createAsyncThunk(
   "add/members",
@@ -229,6 +251,51 @@ export const editMember = createAsyncThunk(
     }
   }
 );
+export const archiveMember = createAsyncThunk(
+  "archive/members",
+  async (data, { rejectWithValue }) => {
+    const { id, info } = data;
+    try {
+      const response = await fetch(`/api/v1/member/${id}/archive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(info),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
+export const unarchiveMember = createAsyncThunk(
+  "unarchive/members",
+  async (data, { rejectWithValue }) => {
+    const { id, info } = data;
+    try {
+      const response = await fetch(`/api/v1/member/${id}/unarchive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(info),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
+
 export const userSlice = createSlice({
   name: "user",
   initialState,
@@ -280,8 +347,12 @@ export const userSlice = createSlice({
       .addCase(getAllMembers.pending, (state) => {
         state.loading = true;
       })
-      .addCase(getAllMembers.fulfilled, (state) => {
+      .addCase(getAllMembers.fulfilled, (state, { payload }) => {
         state.loading = false;
+        state.allMembers = payload.data;
+        state.allMembers.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
       })
       .addCase(getAllMembers.rejected, (state) => {
         state.loading = false;
@@ -312,6 +383,36 @@ export const userSlice = createSlice({
       })
       .addCase(updateMember.fulfilled, (state) => {
         state.loading = false;
+      })
+      .addCase(handleUnSelectMember.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(handleUnSelectMember.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(handleUnSelectMember.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
+      })
+      .addCase(unarchiveMember.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(unarchiveMember.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(unarchiveMember.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
+      })
+      .addCase(archiveMember.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(archiveMember.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(archiveMember.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
       })
       .addCase(updateMember.rejected, (state) => {
         state.loading = false;

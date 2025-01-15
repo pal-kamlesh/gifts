@@ -2,7 +2,6 @@ import MembersManagemen from "./MembersManagement";
 import User from "./User";
 import Archive from "./Archive";
 import Delivery from "./Delivery";
-import MemberPage from "./MemberPage";
 import Reports from "./Reports";
 import PageNotFound from "./PageNotFound";
 import Login from "./Login";
@@ -15,7 +14,6 @@ export {
   User,
   Archive,
   Delivery,
-  MemberPage,
   Reports,
   Selection,
   PageNotFound,

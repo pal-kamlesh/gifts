@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "flowbite-react";
-import { ExcelTable } from "../components/index.js";
+import { ExcelTable, PageHeader } from "../components/index.js";
 import {
   addMember,
+  archiveMember,
   getAllMembers,
   updateMember,
 } from "../redux/user/userSlice.js";
@@ -41,7 +42,6 @@ export default function MembersManagement() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const [tab, setTab] = useState("");
-
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const tabFromUrl = urlParams.get("tab");
@@ -103,6 +103,7 @@ export default function MembersManagement() {
   }, [currentUser, navigate, dispatch]);
 
   const handleChange = (e) => {
+    console.log(e);
     const { name, value } = e.target;
     setMember((state) => ({ ...state, [name]: value }));
   };
@@ -131,10 +132,27 @@ export default function MembersManagement() {
     setOpen(false);
     setToUpdate(false);
   }
+  // async function handleSelectMember(id) {
+  //   const result = await dispatch(handleSelectMember({ id }));
+  //   const data = unwrapResult(result);
+  //   if (data) {
+  //     filterSetMember(id, data.member);
+  //   }
+  // }
+  async function handleArchiveMember(id) {
+    const result = await dispatch(archiveMember({ id }));
+    const data = unwrapResult(result);
+    if (data) {
+      filterSetMember(id, data.member);
+    }
+    setMember((prev) => ({ ...prev, isArchived: data.member.isArchived }));
+  }
+
   return (
     <div className=" w-full flex justify-center h-screen bg-gray-200">
       <div>
         <div className={` w-full mx-auto overflow-auto}`}>
+          <PageHeader tab={tab} />
           <div
             className={`transition-all duration-500 ease-in-out ${
               open
@@ -227,6 +245,32 @@ export default function MembersManagement() {
                             "address"
                           )}
                         ></textarea>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <fieldset className="border rounded-md p-1">
+                    <legend className="px-2 font-bold text-purple-600">
+                      Actions on Members
+                    </legend>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {/* Company */}
+                      <label className="flex gap-2">
+                        Archive
+                        <input
+                          type="checkbox"
+                          name="isArchived"
+                          className={`form-input mt-1 rounded border-gray-300 ${
+                            member.isArchived
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer"
+                          }`}
+                          checked={member.isArchived}
+                          value={member.isArchived}
+                          disabled={member.isArchived}
+                          onChange={() => {
+                            handleArchiveMember(member._id);
+                          }}
+                        />
                       </label>
                     </div>
                   </fieldset>

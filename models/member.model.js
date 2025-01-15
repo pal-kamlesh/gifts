@@ -68,7 +68,6 @@ const MemberHistorySchema = new mongoose.Schema({
       },
       oldState: {
         type: mongoose.Schema.Types.Mixed,
-        required: true,
       },
       message: {
         type: String,
