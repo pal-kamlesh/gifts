@@ -8,6 +8,7 @@ import Login from "./Login";
 import Layout from "./Layout";
 import Selection from "./Selection";
 import Dashboard from "./Dashboard";
+import Dash from "./Dash";
 export {
   MembersManagemen,
   Dashboard,
@@ -19,4 +20,5 @@ export {
   PageNotFound,
   Login,
   Layout,
+  Dash,
 };

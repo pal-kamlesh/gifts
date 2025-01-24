@@ -1,13 +1,11 @@
-import { Header, ProtectedRoute } from '../components';
+import { ProtectedRoute } from "../components";
 
 function Layout() {
-
-    return (
-        <>
-            <Header />
-            <ProtectedRoute />
-        </>
-    );
+  return (
+    <>
+      <ProtectedRoute />
+    </>
+  );
 }
 
 export default Layout;
