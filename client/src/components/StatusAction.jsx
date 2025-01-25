@@ -1,8 +1,64 @@
+/* eslint-disable react/prop-types */
 import { shouldDisable } from "@/functiion";
-import { useSelector } from "react-redux";
+import { deliveryStatus } from "@/redux/user/userSlice";
+import { Button, Spinner } from "flowbite-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-export default function StatusAction({ onClose, activeMember, setActiveId }) {
+export default function StatusAction({ onClose, activeMember }) {
+  const [deliveryData, setDeliveryData] = useState({
+    employeeName: "",
+    delivered: "",
+    deliveryDate: "",
+    received: "",
+  });
+  const { loading } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    setDeliveryData((data) => ({
+      ...data,
+      employeeName: activeMember?.employeeName,
+      delivered: activeMember?.delivered,
+      deliveryDate: activeMember?.deliveryDate
+        ? new Date(activeMember?.deliveryDate).toISOString().split("T")[0]
+        : "",
+      received: activeMember?.received,
+    }));
+  }, [activeMember]);
+  console.log(deliveryData);
   const { currentUser } = useSelector((state) => state.user);
+
+  function handleChange(e) {
+    const { name, value, type, checked } = e.target;
+    setDeliveryData((data) => ({
+      ...data,
+      [name]: type === "checkbox" ? checked : value, // Dynamically update the field
+    }));
+
+    // Special case for "delivered" to set deliveryDate
+    if (name === "delivered" && e.target.checked) {
+      setDeliveryData((data) => ({
+        ...data,
+        deliveryDate: new Date().toISOString().split("T")[0],
+      }));
+    }
+    if (name === "delivered" && !e.target.checked) {
+      setDeliveryData((data) => ({
+        ...data,
+        deliveryDate: "",
+      }));
+    }
+  }
+  async function handleSubmit(id) {
+    await dispatch(deliveryStatus({ id, info: deliveryData }));
+    setDeliveryData({
+      employeeName: "",
+      delivered: "",
+      deliveryDate: "",
+      received: "",
+    });
+    onClose();
+  }
 
   return (
     <div className="p-6 bg-white rounded-md ">
@@ -20,7 +76,7 @@ export default function StatusAction({ onClose, activeMember, setActiveId }) {
                 type="text"
                 name="name"
                 className="form-input mt-1 w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"
-                value={activeMember.name}
+                value={activeMember?.name}
                 required
                 disabled
               />
@@ -37,9 +93,10 @@ export default function StatusAction({ onClose, activeMember, setActiveId }) {
               <input
                 type="checkbox"
                 name="delivered"
+                checked={deliveryData.delivered}
                 className="form-checkbox mt-1 h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                checked={activeMember.delivered || false}
                 disabled={shouldDisable(currentUser?.rights, "delivered")}
+                onChange={(e) => handleChange(e)}
               />
             </label>
 
@@ -52,9 +109,16 @@ export default function StatusAction({ onClose, activeMember, setActiveId }) {
                 type="date"
                 name="deliveredDate"
                 className="form-input mt-1 w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"
-                value={activeMember.phone}
+                value={
+                  deliveryData?.deliveryDate !== ""
+                    ? new Date(deliveryData?.deliveryDate)
+                        .toISOString()
+                        .split("T")[0]
+                    : ""
+                }
                 required
                 disabled={shouldDisable(currentUser?.rights, "phone")}
+                onChange={(e) => handleChange(e)}
               />
             </label>
 
@@ -67,8 +131,9 @@ export default function StatusAction({ onClose, activeMember, setActiveId }) {
                 type="checkbox"
                 name="received"
                 className="form-checkbox mt-1 h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                checked={activeMember.recived || false}
-                disabled={shouldDisable(currentUser?.rights, "location")}
+                checked={deliveryData.received}
+                disabled={shouldDisable(currentUser?.rights, "received")}
+                onChange={(e) => handleChange(e)}
               />
             </label>
 
@@ -79,14 +144,28 @@ export default function StatusAction({ onClose, activeMember, setActiveId }) {
               </span>
               <input
                 type="text"
-                name="deliveryPerson"
+                name="employeeName"
                 className="form-textarea mt-1 w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"
-                value={activeMember.deleveryPerson}
+                value={deliveryData.employeeName}
                 disabled={shouldDisable(currentUser?.rights, "address")}
+                onChange={(e) => handleChange(e)}
               ></input>
             </label>
           </div>
         </fieldset>
+        <Button
+          disabled={loading}
+          onClick={() => handleSubmit(activeMember._id)}
+        >
+          {loading ? (
+            <div className="flex items-center justify-center">
+              <Spinner size="sm" className="mr-2" />
+              <span>Submiting...</span>
+            </div>
+          ) : (
+            "Submit"
+          )}
+        </Button>
       </div>
     </div>
   );

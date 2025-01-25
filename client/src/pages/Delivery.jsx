@@ -26,7 +26,7 @@ const GiftDeliveryDashboard = () => {
     return "bg-blue-100 text-blue-800";
   };
   useEffect(() => {
-    setActiveMember(allMembers.find((m) => m._id === activeId));
+    setActiveMember(allMembers?.find((m) => m._id === activeId));
   }, [activeId, allMembers]);
 
   const getStatusText = (delivered, received) => {

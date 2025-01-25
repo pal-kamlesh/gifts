@@ -257,3 +257,25 @@ export const unArchive = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateDelivery = async (req, res, next) => {
+  try {
+    const { employeeName, delivered, deliveryDate, received } = req.body;
+    const { id } = req.params;
+    const member = await Member.findById(id);
+    member.employeeName = employeeName;
+    member.delivered = delivered;
+    member.deliveryDate = deliveryDate;
+    member.received = received;
+    await member.save();
+    await MemberHistoryService.recordChange(
+      member._id,
+      member,
+      "Updated Delivery Info",
+      req.user.id
+    );
+    res.status(200).json({ message: "Delivery Status updated", member });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -295,7 +295,28 @@ export const unarchiveMember = createAsyncThunk(
     }
   }
 );
-
+export const deliveryStatus = createAsyncThunk(
+  "delivery/status",
+  async (data, { rejectWithValue }) => {
+    const { id, info } = data;
+    try {
+      const response = await fetch(`/api/v1/member/${id}/deliveryStatus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(info),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
 export const userSlice = createSlice({
   name: "user",
   initialState,
@@ -417,6 +438,31 @@ export const userSlice = createSlice({
       .addCase(updateMember.rejected, (state) => {
         state.loading = false;
         //toast.error(payload);
+      })
+      .addCase(deliveryStatus.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deliveryStatus.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        const memberIndex = state.allMembers.findIndex(
+          (data) => data._id === payload.member._id
+        );
+
+        if (memberIndex !== -1) {
+          state.allMembers[memberIndex] = {
+            ...payload.member,
+          };
+        }
+
+        state.allMembers.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+        toast.success(payload.message, { autoClose: 1000 });
+      })
+
+      .addCase(deliveryStatus.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
       });
   },
 });
