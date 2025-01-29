@@ -116,8 +116,8 @@ export default function User() {
               <Table.HeadCell>Actions</Table.HeadCell>
             </Table.Head>
             <Table.Body>
-              {allUsers.length > 0 &&
-                allUsers.map((user) => (
+              {allUsers?.length > 0 &&
+                allUsers?.map((user) => (
                   <Table.Row
                     key={user._id}
                     className={

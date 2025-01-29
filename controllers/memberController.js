@@ -279,3 +279,59 @@ export const updateDelivery = async (req, res, next) => {
     next(error);
   }
 };
+
+export const dashboardData = async (req, res, next) => {
+  try {
+    const totalMember = await Member.countDocuments();
+    const archivedMember = await Member.countDocuments({
+      isArchived: true,
+    });
+    const giftsDelivered = await Member.countDocuments({
+      delivered: true,
+    });
+    const pendingDelivered = await Member.countDocuments({
+      delivered: false,
+    });
+
+    const [result] = await Selected.aggregate([
+      {
+        $project: {
+          _id: 0,
+          selectedCount: { $size: "$selectedMembers" },
+        },
+      },
+    ]);
+    const selectedMember = result?.selectedCount || 0;
+
+    const giftCounts = await Member.aggregate([
+      {
+        $project: {
+          allGifts: ["$gift1", "$gift2", "$gift3"], // Combine all gifts into an array
+        },
+      },
+      {
+        $unwind: "$allGifts", // Flatten the array
+      },
+      {
+        $group: {
+          _id: "$allGifts", // Group by gift name
+          count: { $sum: 1 }, // Count occurrences
+        },
+      },
+      {
+        $sort: { count: -1 }, // Sort by most common gifts
+      },
+    ]);
+
+    res.json({
+      totalMember,
+      archivedMember,
+      giftsDelivered,
+      pendingDelivered,
+      selectedMember,
+      giftCounts,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

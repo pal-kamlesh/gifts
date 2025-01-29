@@ -5,41 +5,30 @@ import { ExcelTable, PageHeader } from "../components/index.js";
 import {
   addMember,
   archiveMember,
+  closeScratchpad,
+  closeUpdateMode,
   getAllMembers,
+  handleInputs,
+  moveMemberToScratchPad,
+  openScratchpad,
   updateMember,
 } from "../redux/user/userSlice.js";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useLocation, useNavigate } from "react-router-dom";
 import { shouldDisable } from "../functiion.js";
+import { Loading } from "../components/index.js";
 
-const initalMember = {
-  name: "",
-  dob: "",
-  address: "",
-  phone: "",
-  location: "",
-  info: "",
-  gift1: "",
-  gift2: "",
-  gift3: "",
-  giftGiven: false,
-  recived: false,
-  company: "",
-  employeeName: "",
-  delivered: false,
-  received: false,
-  deliveryDate: "",
-  isArchived: false,
-};
 export default function MembersManagement() {
-  const { currentUser } = useSelector((state) => state.user);
+  const {
+    currentUser,
+    allMembers,
+    scratchPad,
+    loading,
+    openModal,
+    updateMode,
+  } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [toUpdate, setToUpdate] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [member, setMember] = useState(initalMember);
-  const [demoMembers, setDemoMembers] = useState([]);
-  const [open, setOpen] = useState(false);
   const location = useLocation();
   const [tab, setTab] = useState("");
 
@@ -50,6 +39,7 @@ export default function MembersManagement() {
       setTab(tabFromUrl);
     }
   }, [location.search]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -74,29 +64,17 @@ export default function MembersManagement() {
       isArchived: formData.get("isArchived") ?? false,
     };
     try {
-      setLoading(true);
-      const resultAction = await dispatch(addMember(obj));
-      const result = unwrapResult(resultAction);
-      setDemoMembers((prev) => [...prev, result.data]);
-      setMember(initalMember);
-      setOpen(!open);
-      setLoading(false);
+      dispatch(addMember(obj));
     } catch (error) {
-      setLoading(false);
       console.error("Error:", error);
     }
   };
 
   useEffect(() => {
-    async function fetchData() {
+    function fetchData() {
       try {
-        setLoading(true);
-        const resultAction = await dispatch(getAllMembers());
-        const result = unwrapResult(resultAction);
-        setDemoMembers(result.data);
-        setLoading(false);
+        dispatch(getAllMembers());
       } catch (error) {
-        setLoading(false);
         console.error("Error", error);
       }
     }
@@ -104,34 +82,15 @@ export default function MembersManagement() {
   }, [currentUser, navigate, dispatch]);
 
   const handleChange = (e) => {
-    console.log(e);
     const { name, value } = e.target;
-    setMember((state) => ({ ...state, [name]: value }));
+    dispatch(handleInputs({ name, value }));
   };
   function setMemberToEdit(id) {
-    const member = demoMembers.find((prev) => prev._id === id);
-    setMember({
-      ...member,
-      dob: new Date(member.dob).toISOString().split("T")[0],
-    });
-    setDemoMembers(demoMembers.filter((member) => member._id !== id));
-    setOpen(true);
-    setToUpdate(true);
+    dispatch(moveMemberToScratchPad(id));
   }
-  function filterSetMember(id, newMember) {
-    const members = demoMembers.filter((prev) => prev._id !== id);
-    setDemoMembers([...members, newMember]);
-  }
-  async function submitUpdate(id, member) {
-    setLoading(true);
-    const result = await dispatch(updateMember({ id, member }));
-    const data = unwrapResult(result);
-    console.log(data);
-    setDemoMembers((prev) => [...prev, data.member]);
-    setLoading(false);
-    setMember(initalMember);
-    setOpen(false);
-    setToUpdate(false);
+  function filterSetMember() {}
+  function submitUpdate(id, member) {
+    dispatch(updateMember({ id, scratchPad: member }));
   }
   // async function handleSelectMember(id) {
   //   const result = await dispatch(handleSelectMember({ id }));
@@ -146,9 +105,12 @@ export default function MembersManagement() {
     if (data) {
       filterSetMember(id, data.member);
     }
-    setMember((prev) => ({ ...prev, isArchived: data.member.isArchived }));
+    console.log(data);
+    //setMember((prev) => ({ ...prev, isArchived: data.member.isArchived }));
   }
-
+  if (loading) {
+    return <Loading />;
+  }
   return (
     <div className=" w-full flex justify-center h-screen bg-gray-200">
       <div>
@@ -156,12 +118,12 @@ export default function MembersManagement() {
           <PageHeader tab={tab} />
           <div
             className={`transition-all duration-500 ease-in-out ${
-              open
+              openModal
                 ? "max-h-[1vh] opacity-100"
                 : "max-h-0 opacity-0 overflow-hidden"
             }`}
           >
-            {open && (
+            {openModal && (
               <form
                 className="flex flex-col gap-6 rounded-lg bg-gray-100 p-6 shadow-lg md:flex-row md:items-start"
                 onSubmit={handleSubmit}
@@ -183,7 +145,7 @@ export default function MembersManagement() {
                           name="name"
                           placeholder="Enter your name"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.name}
+                          value={scratchPad.name}
                           onChange={handleChange}
                           required
                           disabled={shouldDisable(currentUser.rights, "name")}
@@ -196,7 +158,13 @@ export default function MembersManagement() {
                           type="date"
                           name="dob"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.dob || ""}
+                          value={
+                            scratchPad.dob
+                              ? new Date(scratchPad.dob)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : ""
+                          }
                           onChange={handleChange}
                           disabled={shouldDisable(currentUser.rights, "dob")}
                         />
@@ -209,7 +177,7 @@ export default function MembersManagement() {
                           name="phone"
                           placeholder="Enter your phone number"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.phone}
+                          value={scratchPad.phone}
                           onChange={handleChange}
                           required
                           disabled={shouldDisable(currentUser.rights, "phone")}
@@ -223,7 +191,7 @@ export default function MembersManagement() {
                           name="location"
                           placeholder="Enter your location"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.location}
+                          value={scratchPad.location}
                           onChange={handleChange}
                           disabled={shouldDisable(
                             currentUser.rights,
@@ -238,7 +206,7 @@ export default function MembersManagement() {
                           name="address"
                           placeholder="Enter your address"
                           className="form-textarea mt-1 rounded border-gray-300"
-                          value={member.address}
+                          value={scratchPad.address}
                           onChange={handleChange}
                           required
                           disabled={shouldDisable(
@@ -261,15 +229,15 @@ export default function MembersManagement() {
                           type="checkbox"
                           name="isArchived"
                           className={`form-input mt-1 rounded border-gray-300 ${
-                            member.isArchived
+                            scratchPad.isArchived
                               ? "cursor-not-allowed"
                               : "cursor-pointer"
                           }`}
-                          checked={member.isArchived}
-                          value={member.isArchived}
-                          disabled={member.isArchived}
+                          checked={scratchPad.isArchived}
+                          value={scratchPad.isArchived}
+                          disabled={scratchPad.isArchived}
                           onChange={() => {
-                            handleArchiveMember(member._id);
+                            handleArchiveMember(scratchPad._id);
                           }}
                         />
                       </label>
@@ -291,13 +259,8 @@ export default function MembersManagement() {
                         <select
                           name="gift1"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.gift1}
-                          onChange={(e) =>
-                            setMember((prev) => ({
-                              ...prev,
-                              gift1: e.target.value,
-                            }))
-                          }
+                          value={scratchPad.gift1}
+                          onChange={(e) => handleChange(e)}
                           disabled={shouldDisable(currentUser.rights, "gift1")}
                         >
                           <option value=""></option>
@@ -311,13 +274,8 @@ export default function MembersManagement() {
                         <select
                           name="gift2"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.gift2}
-                          onChange={(e) =>
-                            setMember((prev) => ({
-                              ...prev,
-                              gift2: e.target.value,
-                            }))
-                          }
+                          value={scratchPad.gift2}
+                          onChange={(e) => handleChange(e)}
                           disabled={shouldDisable(currentUser.rights, "gift2")}
                         >
                           <option value=""></option>
@@ -333,13 +291,8 @@ export default function MembersManagement() {
                         <select
                           name="gift3"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.gift3}
-                          onChange={(e) =>
-                            setMember((prev) => ({
-                              ...prev,
-                              gift3: e.target.value,
-                            }))
-                          }
+                          value={scratchPad.gift3}
+                          onChange={(e) => handleChange(e)}
                           disabled={shouldDisable(currentUser.rights, "gift3")}
                         >
                           <option value=""></option>
@@ -363,8 +316,8 @@ export default function MembersManagement() {
                           name="company"
                           placeholder="Enter company name"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.company}
-                          onChange={handleChange}
+                          value={scratchPad.company}
+                          onChange={(e) => handleChange(e)}
                           disabled={shouldDisable(
                             currentUser.rights,
                             "company"
@@ -379,8 +332,8 @@ export default function MembersManagement() {
                           name="info"
                           placeholder="Enter additional info"
                           className="form-input mt-1 rounded border-gray-300"
-                          value={member.info}
-                          onChange={handleChange}
+                          value={scratchPad.info}
+                          onChange={(e) => handleChange(e)}
                           required
                           disabled={shouldDisable(currentUser.rights, "info")}
                         />
@@ -393,8 +346,8 @@ export default function MembersManagement() {
                       disabled={loading}
                       className="w-full max-w-xs rounded bg-purple-600 py-2 text-white hover:bg-purple-700 disabled:opacity-50"
                       onClick={
-                        toUpdate
-                          ? () => submitUpdate(member._id, member)
+                        updateMode
+                          ? () => submitUpdate(scratchPad._id, scratchPad)
                           : () => handleSubmit()
                       }
                     >
@@ -403,7 +356,7 @@ export default function MembersManagement() {
                           <Spinner size="sm" />
                           <span className="pl-3">Loading...</span>
                         </>
-                      ) : toUpdate ? (
+                      ) : updateMode ? (
                         "Update"
                       ) : (
                         "Submit"
@@ -412,20 +365,10 @@ export default function MembersManagement() {
                     <button
                       disabled={loading}
                       className="w-full max-w-xs rounded bg-purple-600 py-2 text-white hover:bg-purple-700 disabled:opacity-50"
-                      onClick={() =>
-                        !toUpdate
-                          ? [
-                              setOpen(false),
-                              setMember(initalMember),
-                              setToUpdate(false),
-                            ]
-                          : [
-                              setDemoMembers((data) => [...data, member]),
-                              setMember(initalMember),
-                              setOpen(false),
-                              setToUpdate(false),
-                            ]
-                      }
+                      onClick={() => [
+                        dispatch(closeScratchpad()),
+                        dispatch(closeUpdateMode()),
+                      ]}
                     >
                       Cancel
                     </button>
@@ -435,11 +378,11 @@ export default function MembersManagement() {
             )}
           </div>
         </div>
-        {!open && tab === "members" && (
+        {!openModal && tab === "members" && (
           <div className="mt-4 flex justify-center">
             <button
               className="w-full max-w-xs rounded bg-purple-600 py-2 text-white hover:bg-purple-700 disabled:opacity-50"
-              onClick={() => setOpen(!open)}
+              onClick={() => dispatch(openScratchpad())}
             >
               Add
             </button>
@@ -448,11 +391,11 @@ export default function MembersManagement() {
         {/* Table Section */}
         <div
           className={`transition-all duration-500 ease-in-out ${
-            open ? "translate-y-[calc(60vh+1rem)]" : "translate-y-0"
+            openModal ? "translate-y-[calc(60vh+1rem)]" : "translate-y-0"
           }`}
         >
           <ExcelTable
-            members={demoMembers}
+            members={allMembers}
             fn={setMemberToEdit}
             filterSetMember={filterSetMember}
           />

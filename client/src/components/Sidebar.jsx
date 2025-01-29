@@ -10,11 +10,16 @@ import {
   FaBars,
   FaUser,
 } from "react-icons/fa";
+import { Avatar, Dropdown } from "flowbite-react";
+import { useDispatch, useSelector } from "react-redux";
+import { logout, signoutSuccess } from "../redux/user/userSlice.js";
 
 const Sidebar = () => {
+  const { currentUser } = useSelector((state) => state.user);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [tab, setTab] = useState("");
   const location = useLocation();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -67,6 +72,20 @@ const Sidebar = () => {
     },
   ];
 
+  const handleSignout = async () => {
+    try {
+      const res = dispatch(logout());
+      const data = await res.json();
+      if (!res.ok) {
+        console.log(data.messsage);
+      } else {
+        dispatch(signoutSuccess());
+      }
+    } catch (error) {
+      console.log(error.messsage);
+    }
+  };
+
   return (
     <div
       className={`h-screen bg-gray-800 text-white ${
@@ -82,8 +101,8 @@ const Sidebar = () => {
       </button>
 
       {/* Navigation Menu */}
-      <nav className="mt-4">
-        <ul className="space-y-2">
+      <nav className="mt-4 relative flex flex-col h-full">
+        <ul className="space-y-2 flex-grow">
           {menuItems.map((item, index) => (
             <li
               key={index}
@@ -98,6 +117,30 @@ const Sidebar = () => {
             </li>
           ))}
         </ul>
+        <div className="absolute bottom-0 w-full">
+          {currentUser && (
+            <Dropdown
+              arrowIcon={false}
+              inline
+              label={
+                <Avatar
+                  alt="User settings"
+                  img="https://cdn-icons-png.flaticon.com/512/6596/6596121.png"
+                  rounded
+                />
+              }
+            >
+              <Dropdown.Header>
+                <span className="block text-sm">{currentUser?.username}</span>
+                <span className="block truncate text-sm font-medium">
+                  {currentUser?.email}
+                </span>
+              </Dropdown.Header>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={handleSignout}>Sign out</Dropdown.Item>
+            </Dropdown>
+          )}
+        </div>
       </nav>
     </div>
   );

@@ -6,6 +6,7 @@ import Dashboard from "../pages/Dashboard";
 import PageHeader from "./PageHeader";
 import CustomModal from "./CustomModal";
 import StatusAction from "./StatusAction";
+import Loading from "./Loading";
 export {
   Header,
   ExcelTable,
@@ -15,4 +16,5 @@ export {
   PageHeader,
   CustomModal,
   StatusAction,
+  Loading,
 };

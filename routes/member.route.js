@@ -3,6 +3,7 @@ import { verifyToken } from "../utils/verifyUser.js";
 import {
   addMember,
   archiveMember,
+  dashboardData,
   getMember,
   selectMember,
   unArchive,
@@ -21,4 +22,5 @@ router.post("/:id/unselect", verifyToken, unSelectMember);
 router.post("/:id/archive", verifyToken, archiveMember);
 router.post("/:id/unarchive", verifyToken, unArchive);
 router.post("/:id/deliveryStatus", verifyToken, updateDelivery);
+router.get("/reports/dashboard", dashboardData);
 export default router;

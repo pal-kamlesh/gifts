@@ -12,10 +12,10 @@ import {
   Phone,
 } from "lucide-react";
 import { useSelector } from "react-redux";
-import { CustomModal, StatusAction } from "@/components";
+import { CustomModal, Loading, StatusAction } from "@/components";
 
-const GiftDeliveryDashboard = () => {
-  const { allMembers } = useSelector((state) => state.user);
+const Delivery = () => {
+  const { allMembers, loading } = useSelector((state) => state.user);
   const [filterStatus, setFilterStatus] = useState("all");
   const [statusModel, setStatusModel] = useState(false);
   const [activeId, setActiveId] = useState(null);
@@ -42,6 +42,9 @@ const GiftDeliveryDashboard = () => {
       return member.delivered && !member.received;
     return !member.delivered && !member.received;
   });
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <div className="w-full mx-auto p-4 space-y-6">
@@ -206,4 +209,4 @@ const GiftDeliveryDashboard = () => {
   );
 };
 
-export default GiftDeliveryDashboard;
+export default Delivery;

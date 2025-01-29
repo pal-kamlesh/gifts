@@ -1,4 +1,4 @@
-import MembersManagemen from "./MembersManagement";
+import MembersManagement from "./MembersManagement";
 import User from "./User";
 import Archive from "./Archive";
 import Delivery from "./Delivery";
@@ -10,7 +10,7 @@ import Selection from "./Selection";
 import Dashboard from "./Dashboard";
 import Dash from "./Dash";
 export {
-  MembersManagemen,
+  MembersManagement,
   Dashboard,
   User,
   Archive,

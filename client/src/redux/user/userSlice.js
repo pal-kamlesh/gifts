@@ -1,10 +1,33 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 
+const initalMember = {
+  name: "",
+  dob: "",
+  address: "",
+  phone: "",
+  location: "",
+  info: "",
+  gift1: "",
+  gift2: "",
+  gift3: "",
+  giftGiven: false,
+  recived: false,
+  company: "",
+  employeeName: "",
+  delivered: false,
+  received: false,
+  deliveryDate: "",
+  isArchived: false,
+};
+
 const initialState = {
   currentUser: null,
   allUsers: [],
   allMembers: [],
+  scratchPad: initalMember,
+  openModal: false,
+  updateMode: false,
   error: null,
   loading: false,
 };
@@ -207,7 +230,6 @@ export const handleUnSelectMember = createAsyncThunk(
     }
   }
 );
-
 export const addMember = createAsyncThunk(
   "add/members",
   async (data, { rejectWithValue }) => {
@@ -295,6 +317,7 @@ export const unarchiveMember = createAsyncThunk(
     }
   }
 );
+
 export const deliveryStatus = createAsyncThunk(
   "delivery/status",
   async (data, { rejectWithValue }) => {
@@ -305,6 +328,23 @@ export const deliveryStatus = createAsyncThunk(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(info),
       });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
+export const dashboardData = createAsyncThunk(
+  "dashboard/data",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`api/v1/member/reports/dashboard`);
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData);
@@ -328,9 +368,49 @@ export const userSlice = createSlice({
     signoutSuccess: (state) => {
       state.currentUser = null;
     },
+    moveMemberToScratchPad: (state, { payload }) => {
+      state.openModal = true;
+      state.updateMode = true;
+      state.scratchPad = state.allMembers.find((m) => m._id === payload);
+      state.allMembers = state.allMembers.filter((m) => m._id !== payload);
+    },
+    openScratchpad: (state) => {
+      state.openModal = true;
+    },
+    closeScratchpad: (state) => {
+      state.openModal = false;
+      state.scratchPad = initalMember;
+    },
+    openUpdateMode: (state) => {
+      state.updateMode = true;
+    },
+    closeUpdateMode: (state) => {
+      state.updateMode = false;
+    },
+    handleInputs: (state, { payload }) => {
+      const { name, value } = payload;
+      state.scratchPad[name] = value;
+    },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(addMember.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(addMember.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.allMembers = [...state.allMembers, payload.data];
+        state.allMembers.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+        state.openModal = false;
+        state.updateMode = false;
+        state.scratchPad = initalMember;
+      })
+      .addCase(addMember.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload.message, { autoClose: 1000 });
+      })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         toast.success(action.payload.message, { autoClose: 1000 });
@@ -377,17 +457,6 @@ export const userSlice = createSlice({
       })
       .addCase(getAllMembers.rejected, (state) => {
         state.loading = false;
-        //toast.error(payload);
-      })
-      .addCase(addMember.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(addMember.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(addMember.rejected, (state) => {
-        state.loading = false;
-        //toast.error(payload);
       })
       .addCase(handleSelectMember.pending, (state) => {
         state.loading = true;
@@ -402,8 +471,17 @@ export const userSlice = createSlice({
       .addCase(updateMember.pending, (state) => {
         state.loading = true;
       })
-      .addCase(updateMember.fulfilled, (state) => {
+      .addCase(updateMember.fulfilled, (state, { payload }) => {
         state.loading = false;
+        state.allMembers = [...state.allMembers, payload.data];
+        state.allMembers.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+        state.scratchPad = initalMember;
+      })
+      .addCase(updateMember.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
       })
       .addCase(handleUnSelectMember.pending, (state) => {
         state.loading = true;
@@ -435,10 +513,6 @@ export const userSlice = createSlice({
         state.loading = false;
         toast.error(payload.message, { autoClose: 1000 });
       })
-      .addCase(updateMember.rejected, (state) => {
-        state.loading = false;
-        //toast.error(payload);
-      })
       .addCase(deliveryStatus.pending, (state) => {
         state.loading = true;
       })
@@ -463,11 +537,30 @@ export const userSlice = createSlice({
       .addCase(deliveryStatus.rejected, (state, { payload }) => {
         state.loading = false;
         toast.error(payload.message, { autoClose: 1000 });
+      })
+      .addCase(dashboardData.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(dashboardData.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(dashboardData.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
       });
   },
 });
 
 // Action creators are generated for each case reducer function
-export const { handleLogout, signoutSuccess } = userSlice.actions;
+export const {
+  handleLogout,
+  signoutSuccess,
+  openScratchpad,
+  closeScratchpad,
+  moveMemberToScratchPad,
+  openUpdateMode,
+  closeUpdateMode,
+  handleInputs,
+} = userSlice.actions;
 
 export default userSlice.reducer;
