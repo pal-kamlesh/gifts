@@ -9,7 +9,6 @@ const DashboardCards = () => {
   const { loading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [data, setData] = useState(null);
-  console.log(data);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -8,7 +8,7 @@ import {
   Reports,
   Selection,
   User,
-  MembersManagement,
+  Member,
 } from "./index.js";
 
 export default function Dashboard() {
@@ -35,7 +35,7 @@ export default function Dashboard() {
       </div>
       <div className="ml-64 flex-1 overflow-y-auto">
         {!tab && <Dash />}
-        {tab === "members" && <MembersManagement />}
+        {tab === "members" && <Member />}
         {tab === "archive" && <Archive />}
         {tab === "selection" && <Selection />}
         {tab === "delivery" && <Delivery />}

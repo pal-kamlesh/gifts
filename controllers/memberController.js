@@ -1,4 +1,4 @@
-import { Member } from "../models/member.model.js";
+import { Member, MemberHistory } from "../models/member.model.js";
 import Selected from "../models/selected.model.js";
 import MemberHistoryService from "../utils/function.js";
 
@@ -46,6 +46,12 @@ export const addMember = async (req, res, next) => {
       isArchived,
       createdBy: id,
     });
+    await newMember.save();
+
+    newMember = await newMember.populate({
+      path: "createdBy",
+      select: "-password -_id -rights -__v",
+    });
     // Save the new member
     newMember = await newMember.save();
     await MemberHistoryService.recordChange(
@@ -64,7 +70,11 @@ export const addMember = async (req, res, next) => {
 export const getMember = async (req, res, next) => {
   //send members with slected field set
   try {
-    const members = await Member.find();
+    const members = await Member.find()
+      .populate({ path: "createdBy", select: "-password -_id -rights -__v" })
+      .populate({
+        path: "history",
+      });
     const sM = await Selected.findOne({}).limit(1);
     const selectedMemberIds = sM
       ? new Set(sM.selectedMembers.map((item) => item.memberId.toString()))
@@ -97,8 +107,11 @@ export const updateMember = async (req, res, next) => {
       gift3,
       company,
       isArchived,
-    } = req.body.member;
-    let oldMember = await Member.findById(id);
+    } = req.body.scratchPad;
+    let oldMember = await Member.findById(id).populate({
+      path: "createdBy",
+      select: "-password -_id -rights -__v",
+    });
     if (!oldMember) {
       res.status(404).json({ message: "No such member found!" });
     }
@@ -129,36 +142,60 @@ export const updateMember = async (req, res, next) => {
 
 export const selectMember = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const currentYear = new Date().getFullYear();
-    const currentYearList = await Selected.findOne({ year: currentYear });
+    const { id } = req.params; // Member ID from request params
+    const currentYear = new Date().getFullYear(); // Get current year
+
+    // Find the current year's selected list
+    let currentYearList = await Selected.findOne();
+
+    // Check if the member exists
     let member = await Member.findById(id);
     if (!member) {
       return res.status(404).json({ message: "Member not found" });
     }
+
+    // Check if the member is archived
     if (member.isArchived) {
-      return res.status(404).json({ message: "Can not Select this member" });
+      return res.status(400).json({ message: "Cannot select this member" });
     }
+
+    // If no list exists for the current year, create a new one
     if (!currentYearList) {
-      const newSelected = new Selected({
+      currentYearList = new Selected({
         year: currentYear,
         selectedMembers: [{ memberId: id }],
       });
-      await newSelected.save();
+      await currentYearList.save();
     } else {
+      // Check if the member is already in the list
+      const isAlreadySelected = currentYearList.selectedMembers.some(
+        (m) => m.memberId.toString() === id
+      );
+
+      if (isAlreadySelected) {
+        return res.status(400).json({ message: "Member is already selected" });
+      }
+
+      // Add the member if they are not already in the list
       currentYearList.selectedMembers.push({ memberId: id });
       await currentYearList.save();
     }
+
+    // Add `selected: true` flag to the response
     member = {
       ...member.toObject(),
       selected: true,
     };
+
+    // Record the selection in MemberHistoryService
     await MemberHistoryService.recordChange(
       member._id,
       {},
-      `Member Selected for Year ${currentYear} `,
+      `Member selected for year ${currentYear}`,
       req.user.id
     );
+
+    // Send response
     res.status(200).json({ message: "Member selected", member });
   } catch (error) {
     next(error);
@@ -209,7 +246,10 @@ export const unSelectMember = async (req, res, next) => {
 export const archiveMember = async (req, res, next) => {
   try {
     const { id } = req.params;
-    let member = await Member.findById(id); // Find the member by id
+    let member = await Member.findById(id).populate({
+      path: "createdBy",
+      select: "-password -_id -rights -__v",
+    });
     if (!member) {
       res.status(404).json({ message: "Member not found" });
       return;
@@ -221,7 +261,13 @@ export const archiveMember = async (req, res, next) => {
         .json({ message: "Member is selected can't Archive now!" });
       return;
     }
-    member.isArchived = true; // Set the isArchived field to true to archive the member record
+    member.isArchived = true;
+    member.gift1 = "";
+    member.gift2 = "";
+    member.gift3 = "";
+    member.employeeName = "";
+    member.delivered = false;
+    member.received = false;
     await member.save(); // Save the member record
     await MemberHistoryService.recordChange(
       member._id,
@@ -237,7 +283,10 @@ export const archiveMember = async (req, res, next) => {
 export const unArchive = async (req, res, next) => {
   try {
     const { id } = req.params;
-    let member = await Member.findById(id);
+    let member = await Member.findById(id).populate({
+      path: "createdBy",
+      select: "-password -_id -rights -__v",
+    });
     if (!member) {
       res.status(404).json({ message: "Member not found" });
     }
@@ -262,7 +311,10 @@ export const updateDelivery = async (req, res, next) => {
   try {
     const { employeeName, delivered, deliveryDate, received } = req.body;
     const { id } = req.params;
-    const member = await Member.findById(id);
+    const member = await Member.findById(id).populate({
+      path: "createdBy",
+      select: "-password -_id -rights -__v",
+    });
     member.employeeName = employeeName;
     member.delivered = delivered;
     member.deliveryDate = deliveryDate;
@@ -288,9 +340,11 @@ export const dashboardData = async (req, res, next) => {
     });
     const giftsDelivered = await Member.countDocuments({
       delivered: true,
+      isArchived: false,
     });
     const pendingDelivered = await Member.countDocuments({
       delivered: false,
+      isArchived: false,
     });
 
     const [result] = await Selected.aggregate([
@@ -303,24 +357,50 @@ export const dashboardData = async (req, res, next) => {
     ]);
     const selectedMember = result?.selectedCount || 0;
 
-    const giftCounts = await Member.aggregate([
+    const giftCounts = await Selected.aggregate([
+      // Step 1: Unwind the selectedMembers array to process each member individually
+      { $unwind: "$selectedMembers" },
+
+      // Step 2: Join with the Member collection to fetch gift data
+      {
+        $lookup: {
+          from: "members", // Name of the Member collection (case-sensitive)
+          localField: "selectedMembers.memberId",
+          foreignField: "_id",
+          as: "memberData",
+        },
+      },
+
+      // Step 3: Unwind the memberData array (result of $lookup)
+      { $unwind: "$memberData" },
+
+      // Step 4: Combine gift fields (gift1, gift2, gift3) into a single array
       {
         $project: {
-          allGifts: ["$gift1", "$gift2", "$gift3"], // Combine all gifts into an array
+          allGifts: [
+            "$memberData.gift1",
+            "$memberData.gift2",
+            "$memberData.gift3",
+          ],
         },
       },
-      {
-        $unwind: "$allGifts", // Flatten the array
-      },
+
+      // Step 5: Unwind the allGifts array to flatten it
+      { $unwind: "$allGifts" },
+
+      // Step 6: Filter out null/undefined gifts (optional)
+      { $match: { allGifts: { $exists: true, $ne: null } } },
+
+      // Step 7: Group by gift name and count occurrences
       {
         $group: {
-          _id: "$allGifts", // Group by gift name
-          count: { $sum: 1 }, // Count occurrences
+          _id: "$allGifts",
+          count: { $sum: 1 },
         },
       },
-      {
-        $sort: { count: -1 }, // Sort by most common gifts
-      },
+
+      // Step 8: Sort by count (descending)
+      { $sort: { count: -1 } },
     ]);
 
     res.json({
@@ -331,6 +411,33 @@ export const dashboardData = async (req, res, next) => {
       selectedMember,
       giftCounts,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const selectedMembers = async (req, res, next) => {
+  try {
+    const selectedMembers = await Selected.findOne().populate({
+      path: "selectedMembers.memberId",
+    });
+    // Case 1: No data found
+    if (!selectedMembers) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No selected members found." });
+    }
+
+    res.status(200).json({ success: true, data: selectedMembers });
+  } catch (error) {
+    next(error);
+  }
+};
+export const getHistory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await MemberHistory.find({ memberId: id });
+    res.status(200).json({ data });
   } catch (error) {
     next(error);
   }

@@ -4,7 +4,9 @@ import {
   addMember,
   archiveMember,
   dashboardData,
+  getHistory,
   getMember,
+  selectedMembers,
   selectMember,
   unArchive,
   unSelectMember,
@@ -23,4 +25,6 @@ router.post("/:id/archive", verifyToken, archiveMember);
 router.post("/:id/unarchive", verifyToken, unArchive);
 router.post("/:id/deliveryStatus", verifyToken, updateDelivery);
 router.get("/reports/dashboard", dashboardData);
+router.get("/get/selected", selectedMembers);
+router.get("/:id/get/history", getHistory);
 export default router;

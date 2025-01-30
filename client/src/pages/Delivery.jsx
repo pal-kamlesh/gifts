@@ -11,11 +11,13 @@ import {
   MapPin,
   Phone,
 } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { CustomModal, Loading, StatusAction } from "@/components";
+import { getSelectedMembers } from "@/redux/user/userSlice";
 
 const Delivery = () => {
-  const { allMembers, loading } = useSelector((state) => state.user);
+  const { selected, loading } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const [filterStatus, setFilterStatus] = useState("all");
   const [statusModel, setStatusModel] = useState(false);
   const [activeId, setActiveId] = useState(null);
@@ -26,8 +28,12 @@ const Delivery = () => {
     return "bg-blue-100 text-blue-800";
   };
   useEffect(() => {
-    setActiveMember(allMembers?.find((m) => m._id === activeId));
-  }, [activeId, allMembers]);
+    dispatch(getSelectedMembers());
+  }, []);
+
+  useEffect(() => {
+    setActiveMember(selected?.find((m) => m.memberId._id === activeId));
+  }, [activeId, selected]);
 
   const getStatusText = (delivered, received) => {
     if (received) return "Completed";
@@ -35,7 +41,7 @@ const Delivery = () => {
     return "Pending";
   };
 
-  const filteredMembers = allMembers?.filter((member) => {
+  const filteredMembers = selected?.filter((member) => {
     if (filterStatus === "all") return true;
     if (filterStatus === "completed") return member.received;
     if (filterStatus === "delivered")
@@ -45,7 +51,6 @@ const Delivery = () => {
   if (loading) {
     return <Loading />;
   }
-
   return (
     <div className="w-full mx-auto p-4 space-y-6">
       {/* Header with filters */}
@@ -96,20 +101,25 @@ const Delivery = () => {
       {/* Delivery Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredMembers?.map((member) => (
-          <Card key={member._id} className="flex flex-col">
+          <Card key={member.memberId._id} className="flex flex-col">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
-                <CardTitle className="text-xl">{member.name}</CardTitle>
+                <CardTitle className="text-xl">
+                  {member.memberId.name}
+                </CardTitle>
                 <Badge
                   className={`${getStatusColor(
-                    member.delivered,
-                    member.received
+                    member.memberId.delivered,
+                    member.memberId.received
                   )} px-2 py-1 rounded cursor-pointer`}
                   onClick={() => (
-                    setStatusModel(true), setActiveId(member._id)
+                    setStatusModel(true), setActiveId(member.memberId._id)
                   )}
                 >
-                  {getStatusText(member.delivered, member.received)}
+                  {getStatusText(
+                    member.memberId.delivered,
+                    member.memberId.received
+                  )}
                 </Badge>
               </div>
             </CardHeader>
@@ -118,16 +128,16 @@ const Delivery = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-gray-500" />
-                  <span>{member.address}</span>
+                  <span>{member.memberId.address}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-500" />
-                  <span>{member.phone}</span>
+                  <span>{member.memberId.phone}</span>
                 </div>
-                {member.location && (
+                {member.memberId.location && (
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 text-gray-500" />
-                    <span>{member.location}</span>
+                    <span>{member.memberId.location}</span>
                   </div>
                 )}
               </div>
@@ -139,50 +149,52 @@ const Delivery = () => {
                   Gifts
                 </h3>
                 <ul className="space-y-1">
-                  {member.gift1 && (
+                  {member.memberId.gift1 && (
                     <li className="flex items-center gap-2">
-                      {member.delivered ? (
+                      {member.memberId.delivered ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-gray-300" />
                       )}
-                      {member.gift1}
+                      {member.memberId.gift1}
                     </li>
                   )}
-                  {member.gift2 && (
+                  {member.memberId.gift2 && (
                     <li className="flex items-center gap-2">
-                      {member.delivered ? (
+                      {member.memberId.delivered ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-gray-300" />
                       )}
-                      {member.gift2}
+                      {member.memberId.gift2}
                     </li>
                   )}
-                  {member.gift3 && (
+                  {member.memberId.gift3 && (
                     <li className="flex items-center gap-2">
-                      {member.delivered ? (
+                      {member.memberId.delivered ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-gray-300" />
                       )}
-                      {member.gift3}
+                      {member.memberId.gift3}
                     </li>
                   )}
                 </ul>
               </div>
 
               {/* Delivery Details */}
-              {member.deliveryDate && (
+              {member.memberId.deliveryDate && (
                 <div className="border-t mt-4 pt-4">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="h-4 w-4" />
                     Delivered on:{" "}
-                    {new Date(member.deliveryDate).toLocaleDateString()}
+                    {new Date(
+                      member.memberId.deliveryDate
+                    ).toLocaleDateString()}
                   </div>
-                  {member.employeeName && (
+                  {member.memberId.employeeName && (
                     <div className="text-sm text-gray-600 mt-1">
-                      By: {member.employeeName}
+                      By: {member.memberId.employeeName}
                     </div>
                   )}
                 </div>

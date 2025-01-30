@@ -1,4 +1,3 @@
-import MembersManagement from "./MembersManagement";
 import User from "./User";
 import Archive from "./Archive";
 import Delivery from "./Delivery";
@@ -9,8 +8,8 @@ import Layout from "./Layout";
 import Selection from "./Selection";
 import Dashboard from "./Dashboard";
 import Dash from "./Dash";
+import Member from "./Member";
 export {
-  MembersManagement,
   Dashboard,
   User,
   Archive,
@@ -21,4 +20,5 @@ export {
   Login,
   Layout,
   Dash,
+  Member,
 };

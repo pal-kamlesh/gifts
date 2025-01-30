@@ -25,6 +25,7 @@ const initialState = {
   currentUser: null,
   allUsers: [],
   allMembers: [],
+  selected: [],
   scratchPad: initalMember,
   openModal: false,
   updateMode: false,
@@ -340,11 +341,48 @@ export const deliveryStatus = createAsyncThunk(
     }
   }
 );
+
 export const dashboardData = createAsyncThunk(
   "dashboard/data",
   async (data, { rejectWithValue }) => {
     try {
       const response = await fetch(`api/v1/member/reports/dashboard`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
+export const getSelectedMembers = createAsyncThunk(
+  "get/selectedMembers",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`api/v1/member/get/selected`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
+
+export const getHistory = createAsyncThunk(
+  "get/history",
+  async (data, { rejectWithValue }) => {
+    const { id } = data;
+    try {
+      const response = await fetch(`api/v1/member/${id}/get/history`);
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData);
@@ -374,6 +412,11 @@ export const userSlice = createSlice({
       state.scratchPad = state.allMembers.find((m) => m._id === payload);
       state.allMembers = state.allMembers.filter((m) => m._id !== payload);
     },
+    moveScratchPadToMemberList: (state) => {
+      state.openModal = false;
+      state.updateMode = false;
+      state.allMembers = [...state.allMembers, state.scratchPad];
+    },
     openScratchpad: (state) => {
       state.openModal = true;
     },
@@ -381,6 +424,7 @@ export const userSlice = createSlice({
       state.openModal = false;
       state.scratchPad = initalMember;
     },
+
     openUpdateMode: (state) => {
       state.updateMode = true;
     },
@@ -461,8 +505,22 @@ export const userSlice = createSlice({
       .addCase(handleSelectMember.pending, (state) => {
         state.loading = true;
       })
-      .addCase(handleSelectMember.fulfilled, (state) => {
+      .addCase(handleSelectMember.fulfilled, (state, { payload }) => {
         state.loading = false;
+        const memberIndex = state.allMembers.findIndex(
+          (data) => data._id === payload.member._id
+        );
+
+        if (memberIndex !== -1) {
+          state.allMembers[memberIndex] = {
+            ...payload.member,
+          };
+        }
+
+        state.allMembers.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+        toast.success(payload.message, { autoClose: 1000 });
       })
       .addCase(handleSelectMember.rejected, (state) => {
         state.loading = false;
@@ -473,10 +531,12 @@ export const userSlice = createSlice({
       })
       .addCase(updateMember.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.allMembers = [...state.allMembers, payload.data];
+        state.allMembers = [...state.allMembers, payload.member];
         state.allMembers.sort(
           (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
         );
+        state.openModal = false;
+        state.updateMode = false;
         state.scratchPad = initalMember;
       })
       .addCase(updateMember.rejected, (state, { payload }) => {
@@ -486,8 +546,22 @@ export const userSlice = createSlice({
       .addCase(handleUnSelectMember.pending, (state) => {
         state.loading = true;
       })
-      .addCase(handleUnSelectMember.fulfilled, (state) => {
+      .addCase(handleUnSelectMember.fulfilled, (state, { payload }) => {
         state.loading = false;
+        const memberIndex = state.allMembers.findIndex(
+          (data) => data._id === payload.member._id
+        );
+
+        if (memberIndex !== -1) {
+          state.allMembers[memberIndex] = {
+            ...payload.member,
+          };
+        }
+
+        state.allMembers.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+        toast.success(payload.message, { autoClose: 1000 });
       })
       .addCase(handleUnSelectMember.rejected, (state, { payload }) => {
         state.loading = false;
@@ -547,6 +621,27 @@ export const userSlice = createSlice({
       .addCase(dashboardData.rejected, (state, { payload }) => {
         state.loading = false;
         toast.error(payload.message, { autoClose: 1000 });
+      })
+      .addCase(getSelectedMembers.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getSelectedMembers.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.selected = payload.data.selectedMembers;
+      })
+      .addCase(getSelectedMembers.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
+      })
+      .addCase(getHistory.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getHistory.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(getHistory.rejected, (state, { payload }) => {
+        state.loading = false;
+        toast.error(payload.message, { autoClose: 1000 });
       });
   },
 });
@@ -561,6 +656,7 @@ export const {
   openUpdateMode,
   closeUpdateMode,
   handleInputs,
+  moveScratchPadToMemberList,
 } = userSlice.actions;
 
 export default userSlice.reducer;

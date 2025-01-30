@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 export default function StatusAction({ onClose, activeMember }) {
+  const { employeeName, delivered, deliveryDate, received } =
+    activeMember.memberId;
   const [deliveryData, setDeliveryData] = useState({
     employeeName: "",
     delivered: "",
@@ -17,15 +19,14 @@ export default function StatusAction({ onClose, activeMember }) {
   useEffect(() => {
     setDeliveryData((data) => ({
       ...data,
-      employeeName: activeMember?.employeeName,
-      delivered: activeMember?.delivered,
-      deliveryDate: activeMember?.deliveryDate
-        ? new Date(activeMember?.deliveryDate).toISOString().split("T")[0]
+      employeeName: employeeName,
+      delivered: delivered,
+      deliveryDate: deliveryDate
+        ? new Date(deliveryDate).toISOString().split("T")[0]
         : "",
-      received: activeMember?.received,
+      received: received,
     }));
-  }, [activeMember]);
-  console.log(deliveryData);
+  }, [activeMember, delivered, deliveryDate, employeeName, received]);
   const { currentUser } = useSelector((state) => state.user);
 
   function handleChange(e) {
@@ -76,7 +77,7 @@ export default function StatusAction({ onClose, activeMember }) {
                 type="text"
                 name="name"
                 className="form-input mt-1 w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"
-                value={activeMember?.name}
+                value={activeMember?.memberId?.name}
                 required
                 disabled
               />
@@ -155,7 +156,7 @@ export default function StatusAction({ onClose, activeMember }) {
         </fieldset>
         <Button
           disabled={loading}
-          onClick={() => handleSubmit(activeMember._id)}
+          onClick={() => handleSubmit(activeMember.memberId._id)}
         >
           {loading ? (
             <div className="flex items-center justify-center">

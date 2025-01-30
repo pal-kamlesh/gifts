@@ -1,7 +1,8 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "flowbite-react";
-import { ExcelTable, PageHeader } from "../components/index.js";
+import { ExcelTable, PageHeader } from "./index.js";
 import {
   addMember,
   archiveMember,
@@ -10,23 +11,18 @@ import {
   getAllMembers,
   handleInputs,
   moveMemberToScratchPad,
+  moveScratchPadToMemberList,
   openScratchpad,
   updateMember,
 } from "../redux/user/userSlice.js";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useLocation, useNavigate } from "react-router-dom";
 import { shouldDisable } from "../functiion.js";
-import { Loading } from "../components/index.js";
+import { Loading } from "./index.js";
 
-export default function MembersManagement() {
-  const {
-    currentUser,
-    allMembers,
-    scratchPad,
-    loading,
-    openModal,
-    updateMode,
-  } = useSelector((state) => state.user);
+export default function MembersManagement({ memberData: allMembers }) {
+  const { currentUser, scratchPad, loading, openModal, updateMode } =
+    useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,7 +84,6 @@ export default function MembersManagement() {
   function setMemberToEdit(id) {
     dispatch(moveMemberToScratchPad(id));
   }
-  function filterSetMember() {}
   function submitUpdate(id, member) {
     dispatch(updateMember({ id, scratchPad: member }));
   }
@@ -105,9 +100,8 @@ export default function MembersManagement() {
     if (data) {
       filterSetMember(id, data.member);
     }
-    console.log(data);
-    //setMember((prev) => ({ ...prev, isArchived: data.member.isArchived }));
   }
+  const filterSetMember = () => {};
   if (loading) {
     return <Loading />;
   }
@@ -365,10 +359,14 @@ export default function MembersManagement() {
                     <button
                       disabled={loading}
                       className="w-full max-w-xs rounded bg-purple-600 py-2 text-white hover:bg-purple-700 disabled:opacity-50"
-                      onClick={() => [
-                        dispatch(closeScratchpad()),
-                        dispatch(closeUpdateMode()),
-                      ]}
+                      onClick={() => {
+                        if (updateMode) {
+                          dispatch(moveScratchPadToMemberList());
+                        } else {
+                          dispatch(closeScratchpad());
+                          dispatch(closeUpdateMode());
+                        }
+                      }}
                     >
                       Cancel
                     </button>
@@ -394,11 +392,7 @@ export default function MembersManagement() {
             openModal ? "translate-y-[calc(60vh+1rem)]" : "translate-y-0"
           }`}
         >
-          <ExcelTable
-            members={allMembers}
-            fn={setMemberToEdit}
-            filterSetMember={filterSetMember}
-          />
+          <ExcelTable members={allMembers} fn={setMemberToEdit} />
         </div>
       </div>
     </div>

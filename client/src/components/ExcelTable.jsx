@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { shouldDisable } from "../functiion";
 import { useEffect, useState } from "react";
 import {
+  getHistory,
   handleSelectMember,
   handleUnSelectMember,
   unarchiveMember,
@@ -52,6 +53,11 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
     if (data) {
       filterSetMember(id, data.member);
     }
+  }
+  async function handleHistory(id) {
+    const data = await dispatch(getHistory({ id }));
+    const result = unwrapResult(data);
+    console.log(result);
   }
   return (
     <div className="overflow-auto my-3 mx-auto w-11/12">
@@ -113,6 +119,11 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
                 Actions
               </th>
             )}
+            {tab === "members" && (
+              <th className="border border-gray-400 px-4 py-2 text-left">
+                History
+              </th>
+            )}
             {tab === "selection" && (
               <th className="border border-gray-400 px-4 py-2 text-left">
                 {`Selct for ${new Date().getFullYear()}`}
@@ -121,10 +132,10 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
           </tr>
         </thead>
         <tbody>
-          {members.map((member, index) => (
+          {members?.map((member, index) => (
             <tr
               key={index}
-              className={` ${member.isArchived ? "bg-red-300" : "bg-white"}`}
+              className={` ${member?.isArchived ? "bg-red-300" : "bg-white"}`}
             >
               {!isFieldDisabled("name") && (
                 <td className="border border-gray-400 px-4 py-2">
@@ -191,6 +202,23 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
                     </span>
                   </button>
                 </td>
+              )}
+              {tab === "members" && (
+                <th className="border border-gray-400 px-4 py-2 text-left ">
+                  <div className="flex items-center justify-center">
+                    <button
+                      className={` ${
+                        member.history ? "cursor-pointer" : "cursor-not-allowed"
+                      } bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150`}
+                      onClick={() => handleHistory(member._id)}
+                    >
+                      <span className="flex items-center justify-center gap-1">
+                        <IoPersonRemoveSharp />
+                        <span>History</span>
+                      </span>
+                    </button>
+                  </div>
+                </th>
               )}
               {tab === "archive" && (
                 <td className="border border-gray-400 px-4 py-2">
