@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { Spinner } from "flowbite-react";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { login } from "../redux/user/userSlice";
 import bg from "../images/bg.webp";
 

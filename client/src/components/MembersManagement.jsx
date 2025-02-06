@@ -25,16 +25,13 @@ export default function MembersManagement({ memberData: allMembers }) {
     useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { pathname } = useLocation();
   const [tab, setTab] = useState("");
-
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const tabFromUrl = urlParams.get("tab");
-    if (tabFromUrl) {
-      setTab(tabFromUrl);
+    if (pathname) {
+      setTab(pathname.slice(1));
     }
-  }, [location.search]);
+  }, [pathname]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,7 +103,7 @@ export default function MembersManagement({ memberData: allMembers }) {
     return <Loading />;
   }
   return (
-    <div className=" w-full flex justify-center h-screen bg-gray-200">
+    <div className=" flex justify-center h-screen bg-gray-200">
       <div>
         <div className={` w-full mx-auto overflow-auto}`}>
           <PageHeader tab={tab} />
