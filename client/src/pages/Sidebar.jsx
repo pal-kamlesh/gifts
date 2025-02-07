@@ -7,14 +7,13 @@ import {
   FaCogs,
   FaTruck,
   FaChartBar,
-  FaUser,
 } from "react-icons/fa";
+import { FaUsersGear } from "react-icons/fa6";
 import { NavLink, Outlet } from "react-router-dom";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen(!isOpen);
-
   const menuItem = [
     { path: "/", name: "Dashboard", icon: <FaTachometerAlt /> },
     { path: "/members", name: "Members", icon: <FaUsers /> },
@@ -22,7 +21,7 @@ const Sidebar = () => {
     { path: "/selection", name: "Selection", icon: <FaCogs /> },
     { path: "/delivery", name: "Delivery", icon: <FaTruck /> },
     { path: "/reports", name: "Reports", icon: <FaChartBar /> },
-    { path: "/users", name: "Users", icon: <FaUser /> },
+    { path: "/users", name: "Users", icon: <FaUsersGear /> },
   ];
 
   return (
@@ -30,7 +29,7 @@ const Sidebar = () => {
       {/* Sidebar */}
       <div
         style={{ width: isOpen ? "200px" : "80px" }}
-        className="bg-gradient-to-b from-blue-600 to-purple-700 transition-all duration-300 ease-in-out"
+        className="fixed top-0 left-0 h-screen bg-gradient-to-b from-blue-600 to-purple-700 z-50 transition-all duration-300 ease-in-out"
       >
         <div className="flex items-center justify-between p-5 border-b border-blue-500">
           <h1
@@ -72,7 +71,10 @@ const Sidebar = () => {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 p-1 bg-gray-50">
+      <main
+        className="flex-1 p-1 bg-gray-50 transition-all duration-300 ease-in-out"
+        style={{ marginLeft: isOpen ? "200px" : "80px" }}
+      >
         <Outlet />
       </main>
     </div>

@@ -11,9 +11,11 @@ import {
 import { unwrapResult } from "@reduxjs/toolkit";
 import { FaEdit } from "react-icons/fa";
 import { IoPersonRemoveSharp } from "react-icons/io5";
+import { Table } from "flowbite-react";
+import { useLocation } from "react-router-dom";
 
-// eslint-disable-next-line react/prop-types
 const ExcelTable = ({ members, fn, filterSetMember }) => {
+  const { pathname } = useLocation();
   const { currentUser } = useSelector((state) => state.user);
   const [tab, setTab] = useState("");
   const dispatch = useDispatch();
@@ -33,12 +35,8 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
   const isFieldDisabled = (field) => shouldDisable(currentUser.rights, field);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const tabFromUrl = urlParams.get("tab");
-    if (tabFromUrl) {
-      setTab(tabFromUrl);
-    }
-  }, [location.search]);
+    setTab(pathname.slice(1));
+  }, [pathname]);
 
   async function selectMember(id) {
     const result = await dispatch(handleSelectMember({ id }));
@@ -60,193 +58,131 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
     console.log(result);
   }
   return (
-    <div className="overflow-auto my-3 mx-auto w-11/12">
-      <table className="w-full border-collapse border border-gray-400 shadow-lg">
-        <thead className="bg-gray-200">
-          <tr>
-            {!isFieldDisabled("name") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Name
-              </th>
-            )}
-            {!isFieldDisabled("dob") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                DOB
-              </th>
-            )}
-            {!isFieldDisabled("address") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Address
-              </th>
-            )}
-            {!isFieldDisabled("phone") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Phone
-              </th>
-            )}
-            {!isFieldDisabled("location") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Location
-              </th>
-            )}
-            {!isFieldDisabled("info") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Info
-              </th>
-            )}
-            {!isFieldDisabled("gift1") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Gifts
-              </th>
-            )}
-            {!isFieldDisabled("giftGiven") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Gift Given
-              </th>
-            )}
-            {!isFieldDisabled("received") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Received
-              </th>
-            )}
-            {!isFieldDisabled("company") && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Company
-              </th>
-            )}
-            {tab !== "selection" && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                Actions
-              </th>
-            )}
-            {tab === "members" && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                History
-              </th>
-            )}
-            {tab === "selection" && (
-              <th className="border border-gray-400 px-4 py-2 text-left">
-                {`Selct for ${new Date().getFullYear()}`}
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
+    <div className="my-3">
+      <Table hoverable={true}>
+        <Table.Head>
+          {!isFieldDisabled("name") && <Table.HeadCell>Name</Table.HeadCell>}
+          {!isFieldDisabled("dob") && <Table.HeadCell>DOB</Table.HeadCell>}
+          {!isFieldDisabled("address") && (
+            <Table.HeadCell>Address</Table.HeadCell>
+          )}
+          {!isFieldDisabled("phone") && <Table.HeadCell>Phone</Table.HeadCell>}
+          {!isFieldDisabled("location") && (
+            <Table.HeadCell>Location</Table.HeadCell>
+          )}
+          {!isFieldDisabled("info") && <Table.HeadCell>Info</Table.HeadCell>}
+          {!isFieldDisabled("gift1") && <Table.HeadCell>Gifts</Table.HeadCell>}
+          {!isFieldDisabled("giftGiven") && (
+            <Table.HeadCell>Gift Given</Table.HeadCell>
+          )}
+          {!isFieldDisabled("received") && (
+            <Table.HeadCell>Received</Table.HeadCell>
+          )}
+          {!isFieldDisabled("company") && (
+            <Table.HeadCell>Company</Table.HeadCell>
+          )}
+          {tab !== "selection" && <Table.HeadCell>Actions</Table.HeadCell>}
+          {tab === "members" && <Table.HeadCell>History</Table.HeadCell>}
+          {tab === "selection" && (
+            <Table.HeadCell>{`Select for ${new Date().getFullYear()}`}</Table.HeadCell>
+          )}
+        </Table.Head>
+        <Table.Body className="divide-y">
           {members?.map((member, index) => (
-            <tr
+            <Table.Row
               key={index}
-              className={` ${member?.isArchived ? "bg-red-300" : "bg-white"}`}
+              className={member?.isArchived ? "bg-red-300" : "bg-white"}
             >
               {!isFieldDisabled("name") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.name}
-                </td>
+                <Table.Cell>{member.name}</Table.Cell>
               )}
               {!isFieldDisabled("dob") && (
-                <td className="border border-gray-400 px-4 py-2">
+                <Table.Cell>
                   {new Date(member.dob).toISOString().split("T")[0]}
-                </td>
+                </Table.Cell>
               )}
               {!isFieldDisabled("address") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.address}
-                </td>
+                <Table.Cell>{member.address}</Table.Cell>
               )}
               {!isFieldDisabled("phone") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.phone}
-                </td>
+                <Table.Cell>{member.phone}</Table.Cell>
               )}
               {!isFieldDisabled("location") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.location}
-                </td>
+                <Table.Cell>{member.location}</Table.Cell>
               )}
               {!isFieldDisabled("info") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.info}
-                </td>
+                <Table.Cell>{member.info}</Table.Cell>
               )}
               {!isFieldDisabled("gift1") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  <span className="mr-2 block">{member?.gift1}</span>
-                  <span className="mr-2 block">{member?.gift2}</span>
-                  <span className="mr-2 block">{member?.gift3}</span>
-                </td>
+                <Table.Cell>
+                  <div>
+                    <div>{member.gift1}</div>
+                    <div>{member.gift2}</div>
+                    <div>{member.gift3}</div>
+                  </div>
+                </Table.Cell>
               )}
               {!isFieldDisabled("giftGiven") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.giftGiven ? "Yes" : "No"}
-                </td>
+                <Table.Cell>{member.giftGiven ? "Yes" : "No"}</Table.Cell>
               )}
               {!isFieldDisabled("received") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.recived ? "Yes" : "No"}
-                </td>
+                <Table.Cell>{member.recived ? "Yes" : "No"}</Table.Cell>
               )}
               {!isFieldDisabled("company") && (
-                <td className="border border-gray-400 px-4 py-2">
-                  {member.company}
-                </td>
+                <Table.Cell>{member.company}</Table.Cell>
               )}
-
               {tab !== "selection" && tab !== "archive" && (
-                <td className="border border-gray-400 px-2 py-2 text-center">
+                <Table.Cell>
                   <button
                     onClick={() => handleEdit(member._id)}
                     className="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150"
                     title="Edit this member"
                   >
-                    <span className="flex items-center justify-center gap-1">
+                    <span className="flex items-center gap-1">
                       <FaEdit /> <span>Edit</span>
                     </span>
                   </button>
-                </td>
+                </Table.Cell>
               )}
               {tab === "members" && (
-                <th className="border border-gray-400 px-4 py-2 text-left ">
+                <Table.Cell>
                   <div className="flex items-center justify-center">
                     <button
-                      className={` ${
-                        member.history ? "cursor-pointer" : "cursor-not-allowed"
-                      } bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150`}
                       onClick={() => handleHistory(member._id)}
+                      className={`bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150 ${
+                        member.history ? "cursor-pointer" : "cursor-not-allowed"
+                      }`}
                     >
-                      <span className="flex items-center justify-center gap-1">
+                      <span className="flex items-center gap-1">
                         <IoPersonRemoveSharp />
                         <span>History</span>
                       </span>
                     </button>
                   </div>
-                </th>
+                </Table.Cell>
               )}
               {tab === "archive" && (
-                <td className="border border-gray-400 px-4 py-2">
+                <Table.Cell>
                   <button
-                    className={` ${
+                    onClick={() => unArchive(member._id)}
+                    className={`bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150 ${
                       member.isArchived
                         ? "cursor-pointer"
                         : "cursor-not-allowed"
-                    } bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150`}
-                    onClick={() => unArchive(member._id)}
+                    }`}
                   >
-                    <span className="flex items-center justify-center gap-1">
+                    <span className="flex items-center gap-1">
                       <IoPersonRemoveSharp />
                       <span>Remove</span>
                     </span>
                   </button>
-                </td>
+                </Table.Cell>
               )}
               {tab === "selection" && (
-                <th className="border border-gray-400 px-4 py-2 text-left ">
+                <Table.Cell>
                   <div className="flex items-center justify-center">
                     <input
                       type="checkbox"
-                      className={`${
-                        member.isArchived
-                          ? "cursor-not-allowed"
-                          : "cursor-pointer"
-                      }`}
                       checked={member.selected}
                       disabled={member.isArchived}
                       onChange={
@@ -254,14 +190,19 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
                           ? () => unSelctMember(member._id)
                           : () => selectMember(member._id)
                       }
+                      className={`${
+                        member.isArchived
+                          ? "cursor-not-allowed"
+                          : "cursor-pointer"
+                      }`}
                     />
                   </div>
-                </th>
+                </Table.Cell>
               )}
-            </tr>
+            </Table.Row>
           ))}
-        </tbody>
-      </table>
+        </Table.Body>
+      </Table>
     </div>
   );
 };

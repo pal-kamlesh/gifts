@@ -9,7 +9,7 @@ export default function Selction() {
     setActiveMember(allMembers?.filter((data) => !data.isArchived));
   }, [allMembers]);
   return (
-    <div className=" w-full flex justify-center h-screen bg-gray-200">
+    <div className=" w-full flex justify-center p-2">
       <MembersManagement memberData={activeMembers} />
     </div>
   );
