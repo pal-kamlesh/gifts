@@ -1,17 +1,42 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  CustomModal,
-  Loading,
-  MembersManagement,
-  StatusAction,
-} from "@/components";
+import { ExcelTable } from "@/components";
+import { getSelectedMembers } from "@/redux/user/userSlice";
 
 const Delivery = () => {
-  const { selected, allMembers } = useSelector((state) => state.user);
+  const { selected } = useSelector((state) => state.user);
+  const [filteredData, setFilteredData] = useState([]);
+  const dispatch = useDispatch();
   const [filterStatus, setFilterStatus] = useState("all");
-  const [statusModel, setStatusModel] = useState(false);
-  const [activeId, setActiveId] = useState(null);
+
+  useEffect(() => {
+    dispatch(getSelectedMembers());
+  }, [dispatch]);
+
+  useEffect(() => {
+    switch (filterStatus) {
+      case "all":
+        setFilteredData(selected);
+        break;
+      case "pending":
+        setFilteredData(
+          selected.filter(
+            (data) => data.deliveryDate !== "" && !data.confirmDelivery // Fixed typo here
+          )
+        );
+        break;
+      case "delivered":
+        setFilteredData(
+          selected.filter(
+            (data) => data.deliveryDate !== "" && data.confirmDelivery // Fixed typo here
+          )
+        );
+        break;
+      default:
+        break;
+    }
+  }, [filterStatus, selected]);
+  console.log(filteredData);
 
   return (
     <div className="w-full mx-auto p-4 space-y-6">
@@ -47,32 +72,9 @@ const Delivery = () => {
           >
             Delivered
           </button>
-          <button
-            onClick={() => setFilterStatus("completed")}
-            className={`px-4 py-2 rounded ${
-              filterStatus === "completed"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            Completed
-          </button>
         </div>
       </div>
-      <MembersManagement memberData={allMembers} />
-      <CustomModal
-        isOpen={statusModel}
-        onClose={() => setStatusModel(!statusModel)}
-        size="xl"
-        heading="New Contract"
-        bg="bg-red-50"
-      >
-        <StatusAction
-          onClose={() => setStatusModel(!statusModel)}
-          activeMember={activeMember}
-          setActiveId={setActiveId}
-        />
-      </CustomModal>
+      <ExcelTable members={filteredData} />
     </div>
   );
 };

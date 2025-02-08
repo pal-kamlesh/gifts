@@ -3,9 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { shouldDisable } from "../functiion";
 import { useEffect, useState } from "react";
 import {
+  copyToScratchPad,
   getHistory,
   handleSelectMember,
   handleUnSelectMember,
+  moveMemberToScratchPad,
   unarchiveMember,
 } from "../redux/user/userSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
@@ -13,16 +15,16 @@ import { FaEdit } from "react-icons/fa";
 import { IoPersonRemoveSharp } from "react-icons/io5";
 import { Table } from "flowbite-react";
 import { useLocation } from "react-router-dom";
+import { CustomModal, StatusAction } from ".";
 
-const ExcelTable = ({ members, fn, filterSetMember }) => {
+const ExcelTable = ({ members, filterSetMember }) => {
+  const [statusModel, setStatusModel] = useState(false);
+  const [activeId, setActiveId] = useState(null);
   const { pathname } = useLocation();
   const { currentUser } = useSelector((state) => state.user);
   const [tab, setTab] = useState("");
   const dispatch = useDispatch();
 
-  function handleEdit(id) {
-    fn(id);
-  }
   async function unArchive(id) {
     const result = await dispatch(unarchiveMember({ id }));
     const data = unwrapResult(result);
@@ -56,6 +58,9 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
     const data = await dispatch(getHistory({ id }));
     const result = unwrapResult(data);
     console.log(result);
+  }
+  function copyToEdit(id) {
+    dispatch(copyToScratchPad(id));
   }
   return (
     <div className="my-3">
@@ -134,7 +139,11 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
               {tab !== "selection" && tab !== "archive" && (
                 <Table.Cell>
                   <button
-                    onClick={() => handleEdit(member._id)}
+                    onClick={() =>
+                      tab === "delivery"
+                        ? [setStatusModel(true), copyToEdit(member._id)]
+                        : [dispatch(moveMemberToScratchPad(member._id))]
+                    }
                     className="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150"
                     title="Edit this member"
                   >
@@ -203,6 +212,20 @@ const ExcelTable = ({ members, fn, filterSetMember }) => {
           ))}
         </Table.Body>
       </Table>
+
+      <CustomModal
+        isOpen={statusModel}
+        onClose={() => setStatusModel(!statusModel)}
+        size="2xl"
+        heading="New Contract"
+        bg="bg-red-50"
+      >
+        <StatusAction
+          onClose={() => setStatusModel(!statusModel)}
+          setActiveId={setActiveId}
+          activeMember={{}}
+        />
+      </CustomModal>
     </div>
   );
 };

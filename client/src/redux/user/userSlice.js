@@ -318,30 +318,6 @@ export const unarchiveMember = createAsyncThunk(
     }
   }
 );
-
-export const deliveryStatus = createAsyncThunk(
-  "delivery/status",
-  async (data, { rejectWithValue }) => {
-    const { id, info } = data;
-    try {
-      const response = await fetch(`/api/v1/member/${id}/deliveryStatus`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(info),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        return rejectWithValue(errorData);
-      }
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.log(error);
-      return rejectWithValue(error);
-    }
-  }
-);
-
 export const dashboardData = createAsyncThunk(
   "dashboard/data",
   async (data, { rejectWithValue }) => {
@@ -376,7 +352,28 @@ export const getSelectedMembers = createAsyncThunk(
     }
   }
 );
-
+export const deliveryStatus = createAsyncThunk(
+  "delivery/status",
+  async (data, { rejectWithValue }) => {
+    const { id, info } = data;
+    try {
+      const response = await fetch(`/api/v1/member/${id}/deliveryStatus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(info),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.log(error);
+      return rejectWithValue(error);
+    }
+  }
+);
 export const getHistory = createAsyncThunk(
   "get/history",
   async (data, { rejectWithValue }) => {
@@ -411,6 +408,9 @@ export const userSlice = createSlice({
       state.updateMode = true;
       state.scratchPad = state.allMembers.find((m) => m._id === payload);
       state.allMembers = state.allMembers.filter((m) => m._id !== payload);
+    },
+    copyToScratchPad: (state, { payload }) => {
+      state.scratchPad = state.selected.find((m) => m._id === payload);
     },
     moveScratchPadToMemberList: (state) => {
       state.openModal = false;
@@ -592,17 +592,17 @@ export const userSlice = createSlice({
       })
       .addCase(deliveryStatus.fulfilled, (state, { payload }) => {
         state.loading = false;
-        const memberIndex = state.allMembers.findIndex(
+        const memberIndex = state.selected.findIndex(
           (data) => data._id === payload.member._id
         );
 
         if (memberIndex !== -1) {
-          state.allMembers[memberIndex] = {
+          state.selected[memberIndex] = {
             ...payload.member,
           };
         }
 
-        state.allMembers.sort(
+        state.selected.sort(
           (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
         );
         toast.success(payload.message, { autoClose: 1000 });
@@ -627,7 +627,7 @@ export const userSlice = createSlice({
       })
       .addCase(getSelectedMembers.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.selected = payload.data.selectedMembers;
+        state.selected = payload.data;
       })
       .addCase(getSelectedMembers.rejected, (state, { payload }) => {
         state.loading = false;
@@ -657,6 +657,7 @@ export const {
   closeUpdateMode,
   handleInputs,
   moveScratchPadToMemberList,
+  copyToScratchPad,
 } = userSlice.actions;
 
 export default userSlice.reducer;

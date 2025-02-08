@@ -42,9 +42,9 @@ export default function MembersManagement({ memberData: allMembers }) {
     return <Loading />;
   }
   return (
-    <div className=" flex justify-center">
+    <div className=" flex justify-center w-full mx-auto ">
       <div>
-        <div className={` w-full mx-auto overflow-auto}`}>
+        <div>
           <PageHeader tab={tab} />
           <div
             className={`transition-all duration-500 ease-in-out ${

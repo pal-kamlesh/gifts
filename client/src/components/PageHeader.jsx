@@ -10,7 +10,7 @@ export default function PageHeader({ tab }) {
     );
   } else if (tab === "members") {
     return (
-      <div className="w-full">
+      <div className="w-full mx-auto">
         <h1 className="text-center font-semibold text-2xl font-serif border-b-4 border-white py-1 my-4">
           Members Management
         </h1>

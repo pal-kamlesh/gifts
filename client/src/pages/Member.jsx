@@ -5,7 +5,7 @@ const Member = () => {
   const { allMembers } = useSelector((state) => state.user);
 
   return (
-    <div className="flex justify-center p-2">
+    <div className="w-full mx-auto flex justify-center p-2">
       <MembersManagement memberData={allMembers} />
     </div>
   );

@@ -37,9 +37,9 @@ const memberSchema = new mongoose.Schema(
     gift3: {
       type: String,
     },
-    employeeName: String,
-    delivered: Boolean,
-    received: Boolean,
+    deliveryPerson: String,
+    confirmDelivery: Boolean,
+    onDeliveryNote: String,
     deliveryDate: Date,
     isArchived: Boolean,
     createdBy: {

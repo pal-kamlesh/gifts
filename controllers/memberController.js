@@ -309,16 +309,17 @@ export const unArchive = async (req, res, next) => {
 
 export const updateDelivery = async (req, res, next) => {
   try {
-    const { employeeName, delivered, deliveryDate, received } = req.body;
+    const { deliveryPerson, confirmDelivery, onDeliveryNote, deliveryDate } =
+      req.body;
     const { id } = req.params;
     const member = await Member.findById(id).populate({
       path: "createdBy",
       select: "-password -_id -rights -__v",
     });
-    member.employeeName = employeeName;
-    member.delivered = delivered;
+    member.deliveryPerson = deliveryPerson;
+    member.confirmDelivery = confirmDelivery;
     member.deliveryDate = deliveryDate;
-    member.received = received;
+    member.onDeliveryNote = onDeliveryNote;
     await member.save();
     await MemberHistoryService.recordChange(
       member._id,
@@ -418,17 +419,21 @@ export const dashboardData = async (req, res, next) => {
 
 export const selectedMembers = async (req, res, next) => {
   try {
-    const selectedMembers = await Selected.findOne().populate({
-      path: "selectedMembers.memberId",
-    });
+    const selectedMembers = await Selected.findOne()
+      .populate({
+        path: "selectedMembers.memberId",
+      })
+      .lean();
     // Case 1: No data found
     if (!selectedMembers) {
       return res
         .status(404)
         .json({ success: false, message: "No selected members found." });
     }
-
-    res.status(200).json({ success: true, data: selectedMembers });
+    const transformedArray = selectedMembers.selectedMembers.map((item) => ({
+      ...item.memberId,
+    }));
+    res.status(200).json({ success: true, data: transformedArray });
   } catch (error) {
     next(error);
   }
