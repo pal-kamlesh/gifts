@@ -1,3 +1,4 @@
+import { Dropdown } from "flowbite-react";
 import { useState } from "react";
 import {
   FaBars,
@@ -7,13 +8,17 @@ import {
   FaCogs,
   FaTruck,
   FaChartBar,
+  FaUser,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import { FaUsersGear } from "react-icons/fa6";
+import { useSelector } from "react-redux";
 import { NavLink, Outlet } from "react-router-dom";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen(!isOpen);
+  const { currentUser } = useSelector((state) => state.user);
   const menuItem = [
     { path: "/", name: "Dashboard", icon: <FaTachometerAlt /> },
     { path: "/members", name: "Members", icon: <FaUsers /> },
@@ -67,6 +72,34 @@ const Sidebar = () => {
               </span>
             </NavLink>
           ))}
+        </div>
+        {/* User Section - Add this at the bottom of the sidebar */}
+        <div className="absolute bottom-0 left-0 w-full p-4 border-t border-blue-500">
+          <Dropdown
+            label={
+              <div
+                className={`flex items-center text-white ${
+                  isOpen ? "justify-start" : "justify-center"
+                }`}
+              >
+                <FaUser className="text-xl" />
+                <span
+                  style={{ display: isOpen ? "inline" : "none" }}
+                  className="ml-3 font-medium"
+                >
+                  {currentUser.username}
+                </span>
+              </div>
+            }
+            inline
+            placement="top-start"
+            className="w-full"
+          >
+            <Dropdown.Item className="flex items-center px-4 py-2 text-sm text-black hover:bg-white/20 transition-colors">
+              <FaSignOutAlt className="mr-2" />
+              Logout
+            </Dropdown.Item>
+          </Dropdown>
         </div>
       </div>
 
