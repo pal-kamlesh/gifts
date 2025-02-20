@@ -1,23 +1,44 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 
-const initalMember = {
+const initialMember = {
+  // Personal & Contact Information
   name: "",
   dob: "",
-  address: "",
   phone: "",
   location: "",
-  info: "",
-  gift1: "",
-  gift2: "",
-  gift3: "",
-  giftGiven: false,
-  recived: false,
+  address: "",
+
+  // Gifters Status
+  gifters: {
+    EPCORN: false,
+    FJQ: false,
+    SFQ: false,
+    STQ: false,
+    SWT: false,
+  },
+
+  // Gift and Site Details
+  gifts: {
+    foodHamper: "na",
+    liquid: "na",
+    gift: "na",
+    additionalGifts: "",
+  },
+
+  // Company Information
   company: "",
-  employeeName: "",
-  delivered: false,
-  received: false,
-  deliveryDate: "",
+  additionalInfo: "",
+
+  // Delivery Status
+  deliveryStatus: {
+    deliveryPerson: "",
+    deliveryDate: "",
+    confirmDelivery: false,
+    onDeliveryNote: "",
+  },
+
+  // Member Status
   isArchived: false,
 };
 
@@ -26,7 +47,7 @@ const initialState = {
   allUsers: [],
   allMembers: [],
   selected: [],
-  scratchPad: initalMember,
+  scratchPad: initialMember,
   openModal: false,
   updateMode: false,
   error: null,
@@ -422,7 +443,7 @@ export const userSlice = createSlice({
     },
     closeScratchpad: (state) => {
       state.openModal = false;
-      state.scratchPad = initalMember;
+      state.scratchPad = initialMember;
     },
 
     openUpdateMode: (state) => {
@@ -449,7 +470,7 @@ export const userSlice = createSlice({
         );
         state.openModal = false;
         state.updateMode = false;
-        state.scratchPad = initalMember;
+        state.scratchPad = initialMember;
       })
       .addCase(addMember.rejected, (state, action) => {
         state.loading = false;
@@ -537,7 +558,7 @@ export const userSlice = createSlice({
         );
         state.openModal = false;
         state.updateMode = false;
-        state.scratchPad = initalMember;
+        state.scratchPad = initialMember;
       })
       .addCase(updateMember.rejected, (state, { payload }) => {
         state.loading = false;

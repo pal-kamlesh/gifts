@@ -1,6 +1,6 @@
+import { Spinner } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { shouldDisable } from "../functiion.js";
-import { Spinner } from "flowbite-react";
 import {
   addMember,
   archiveMember,
@@ -172,31 +172,6 @@ const MemberForm = () => {
             ))}
           </div>
         </fieldset>
-        <fieldset className="border rounded-md p-1">
-          <legend className="px-2 font-bold text-purple-600">
-            Member Action
-          </legend>
-          <div className="flex justify-evenly items-center">
-            <label className="flex gap-2">
-              Archive Member
-              <input
-                type="checkbox"
-                name="isArchived"
-                className={`form-input mt-1 rounded border-gray-300 ${
-                  scratchPad.isArchived
-                    ? "cursor-not-allowed"
-                    : "cursor-pointer"
-                }`}
-                checked={scratchPad.isArchived}
-                value={scratchPad.isArchived}
-                disabled={scratchPad.isArchived}
-                onChange={() => {
-                  handleArchiveMember(scratchPad._id);
-                }}
-              />
-            </label>
-          </div>
-        </fieldset>
       </div>
 
       <div className="flex-1 space-y-4">
@@ -297,6 +272,71 @@ const MemberForm = () => {
                 onChange={handleChange}
                 required
                 disabled={shouldDisable(currentUser.rights, "additionalInfo")}
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset className="border rounded-md p-4">
+          <legend className="px-2 font-bold text-purple-600">
+            Delivery Status
+          </legend>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="flex flex-col">
+              Delivery Person
+              <input
+                type="text"
+                name="deliveryPerson"
+                placeholder="Enter delivery person name"
+                className="form-input mt-1 rounded border-gray-300"
+                value={scratchPad.deliveryStatus.deliveryPerson}
+                onChange={(e) => handleNestedChange(e, "deliveryStatus")}
+                disabled={shouldDisable(
+                  currentUser.rights,
+                  "deliveryStatus.deliveryPerson"
+                )}
+              />
+            </label>
+            <label className="flex flex-col">
+              Delivery Date
+              <input
+                type="date"
+                name="deliveryDate"
+                className="form-input mt-1 rounded border-gray-300"
+                value={scratchPad.deliveryStatus.deliveryDate}
+                onChange={(e) => handleNestedChange(e, "deliveryStatus")}
+                disabled={shouldDisable(
+                  currentUser.rights,
+                  "deliveryStatus.deliveryDate"
+                )}
+              />
+            </label>
+            <label className="flex gap-2 items-center">
+              Confirm Delivery
+              <input
+                type="checkbox"
+                name="confirmDelivery"
+                className="form-checkbox rounded border-gray-300"
+                checked={scratchPad.deliveryStatus.confirmDelivery}
+                onChange={(e) => handleNestedChange(e, "deliveryStatus")}
+                disabled={shouldDisable(
+                  currentUser.rights,
+                  "deliveryStatus.confirmDelivery"
+                )}
+              />
+            </label>
+            <label className="flex flex-col">
+              Delivery Note
+              <textarea
+                name="onDeliveryNote"
+                placeholder="Enter delivery notes"
+                className="form-textarea mt-1 rounded border-gray-300"
+                value={scratchPad.deliveryStatus.onDeliveryNote}
+                onChange={(e) => handleNestedChange(e, "deliveryStatus")}
+                disabled={shouldDisable(
+                  currentUser.rights,
+                  "deliveryStatus.onDeliveryNote"
+                )}
               />
             </label>
           </div>
