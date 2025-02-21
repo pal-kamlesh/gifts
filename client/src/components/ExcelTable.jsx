@@ -16,9 +16,11 @@ import { IoPersonRemoveSharp } from "react-icons/io5";
 import { Table } from "flowbite-react";
 import { useLocation } from "react-router-dom";
 import { CustomModal, StatusAction } from ".";
+import HistoryView from "./HistoryView";
 
 const ExcelTable = ({ members, filterSetMember }) => {
   const [statusModel, setStatusModel] = useState(false);
+  const [historyModel, setHistoryModel] = useState(false);
   const [activeId, setActiveId] = useState(null);
   const { pathname } = useLocation();
   const { currentUser } = useSelector((state) => state.user);
@@ -54,11 +56,6 @@ const ExcelTable = ({ members, filterSetMember }) => {
       filterSetMember(id, data.member);
     }
   }
-  async function handleHistory(id) {
-    const data = await dispatch(getHistory({ id }));
-    const result = unwrapResult(data);
-    console.log(result);
-  }
   function copyToEdit(id) {
     dispatch(copyToScratchPad(id));
   }
@@ -68,23 +65,19 @@ const ExcelTable = ({ members, filterSetMember }) => {
         <Table.Head>
           {!isFieldDisabled("name") && <Table.HeadCell>Name</Table.HeadCell>}
           {!isFieldDisabled("dob") && <Table.HeadCell>DOB</Table.HeadCell>}
-          {!isFieldDisabled("address") && (
-            <Table.HeadCell>Address</Table.HeadCell>
-          )}
           {!isFieldDisabled("phone") && <Table.HeadCell>Phone</Table.HeadCell>}
           {!isFieldDisabled("location") && (
             <Table.HeadCell>Location</Table.HeadCell>
           )}
-          {!isFieldDisabled("info") && <Table.HeadCell>Info</Table.HeadCell>}
-          {!isFieldDisabled("gift1") && <Table.HeadCell>Gifts</Table.HeadCell>}
+          {!isFieldDisabled("info") && <Table.HeadCell>Gifts</Table.HeadCell>}
+          {!isFieldDisabled("gift1") && (
+            <Table.HeadCell>Gifters</Table.HeadCell>
+          )}
           {!isFieldDisabled("giftGiven") && (
-            <Table.HeadCell>Gift Given</Table.HeadCell>
+            <Table.HeadCell>CreatedBy</Table.HeadCell>
           )}
           {!isFieldDisabled("received") && (
-            <Table.HeadCell>Received</Table.HeadCell>
-          )}
-          {!isFieldDisabled("company") && (
-            <Table.HeadCell>Company</Table.HeadCell>
+            <Table.HeadCell>CreatedAt</Table.HeadCell>
           )}
           {tab !== "selection" && <Table.HeadCell>Actions</Table.HeadCell>}
           {tab === "members" && <Table.HeadCell>History</Table.HeadCell>}
@@ -106,36 +99,38 @@ const ExcelTable = ({ members, filterSetMember }) => {
                   {new Date(member.dob).toISOString().split("T")[0]}
                 </Table.Cell>
               )}
-              {!isFieldDisabled("address") && (
-                <Table.Cell>{member.address}</Table.Cell>
-              )}
               {!isFieldDisabled("phone") && (
                 <Table.Cell>{member.phone}</Table.Cell>
               )}
               {!isFieldDisabled("location") && (
                 <Table.Cell>{member.location}</Table.Cell>
               )}
-              {!isFieldDisabled("info") && (
-                <Table.Cell>{member.info}</Table.Cell>
-              )}
-              {!isFieldDisabled("gift1") && (
-                <Table.Cell>
-                  <div>
-                    <div>{member.gift1}</div>
-                    <div>{member.gift2}</div>
-                    <div>{member.gift3}</div>
-                  </div>
-                </Table.Cell>
-              )}
-              {!isFieldDisabled("giftGiven") && (
-                <Table.Cell>{member.giftGiven ? "Yes" : "No"}</Table.Cell>
-              )}
-              {!isFieldDisabled("received") && (
-                <Table.Cell>{member.recived ? "Yes" : "No"}</Table.Cell>
-              )}
-              {!isFieldDisabled("company") && (
-                <Table.Cell>{member.company}</Table.Cell>
-              )}
+              <Table.Cell>
+                <div>
+                  {Object.entries(member.gifts)
+                    .filter(
+                      ([_, value]) =>
+                        value && value !== "na" && value.trim() !== ""
+                    )
+                    .map(([key, value]) => (
+                      <div key={key}>{value}</div>
+                    ))}
+                </div>
+              </Table.Cell>
+              <Table.Cell>
+                <div>
+                  {Object.keys(member.gifters)
+                    .filter((key) => member.gifters[key]) // Only keep keys where value is true
+                    .map((key) => (
+                      <div key={key}>{key}</div>
+                    ))}
+                </div>
+              </Table.Cell>
+              <Table.Cell>{member.createdBy}</Table.Cell>
+              <Table.Cell>
+                {new Date(member.createdAt).toLocaleDateString()}
+              </Table.Cell>
+
               {tab !== "selection" && tab !== "archive" && (
                 <Table.Cell>
                   <button
@@ -157,7 +152,10 @@ const ExcelTable = ({ members, filterSetMember }) => {
                 <Table.Cell>
                   <div className="flex items-center justify-center">
                     <button
-                      onClick={() => handleHistory(member._id)}
+                      onClick={() => [
+                        setHistoryModel(true),
+                        setActiveId(member._id),
+                      ]}
                       className={`bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md transition duration-150 ${
                         member.history ? "cursor-pointer" : "cursor-not-allowed"
                       }`}
@@ -224,6 +222,19 @@ const ExcelTable = ({ members, filterSetMember }) => {
           onClose={() => setStatusModel(!statusModel)}
           setActiveId={setActiveId}
           activeMember={{}}
+        />
+      </CustomModal>
+
+      <CustomModal
+        isOpen={historyModel}
+        onClose={() => setHistoryModel(false)}
+        size="7xl"
+        heading="New Contract"
+        bg="bg-red-50"
+      >
+        <HistoryView
+          onClose={() => setHistoryModel(false)}
+          memberId={activeId}
         />
       </CustomModal>
     </div>

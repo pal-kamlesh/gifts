@@ -2,14 +2,11 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 
 const initialMember = {
-  // Personal & Contact Information
   name: "",
   dob: "",
   phone: "",
   location: "",
   address: "",
-
-  // Gifters Status
   gifters: {
     EPCORN: false,
     FJQ: false,
@@ -17,28 +14,20 @@ const initialMember = {
     STQ: false,
     SWT: false,
   },
-
-  // Gift and Site Details
   gifts: {
     foodHamper: "na",
     liquid: "na",
     gift: "na",
     additionalGifts: "",
   },
-
-  // Company Information
   company: "",
-  additionalInfo: "",
-
-  // Delivery Status
+  info: "",
   deliveryStatus: {
     deliveryPerson: "",
     deliveryDate: "",
     confirmDelivery: false,
     onDeliveryNote: "",
   },
-
-  // Member Status
   isArchived: false,
 };
 
@@ -453,8 +442,19 @@ export const userSlice = createSlice({
       state.updateMode = false;
     },
     handleInputs: (state, { payload }) => {
-      const { name, value } = payload;
-      state.scratchPad[name] = value;
+      const { name, value, parentKey } = payload;
+
+      if (!parentKey) {
+        state.scratchPad[name] = value;
+      } else {
+        state.scratchPad = {
+          ...state.scratchPad,
+          [parentKey]: {
+            ...state.scratchPad[parentKey],
+            [name]: value,
+          },
+        };
+      }
     },
   },
   extraReducers: (builder) => {
@@ -591,8 +591,20 @@ export const userSlice = createSlice({
       .addCase(unarchiveMember.pending, (state) => {
         state.loading = true;
       })
-      .addCase(unarchiveMember.fulfilled, (state) => {
+      .addCase(unarchiveMember.fulfilled, (state, { payload }) => {
         state.loading = false;
+        const memberIndex = state.allMembers.findIndex(
+          (data) => data._id === payload.member._id
+        );
+        if (memberIndex !== -1) {
+          state.allMembers[memberIndex] = {
+            ...payload.member,
+          };
+        }
+        state.allMembers.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+        toast.success(payload.message, { autoClose: 1000 });
       })
       .addCase(unarchiveMember.rejected, (state, { payload }) => {
         state.loading = false;
@@ -603,6 +615,7 @@ export const userSlice = createSlice({
       })
       .addCase(archiveMember.fulfilled, (state) => {
         state.loading = false;
+        //Do not add fulfilled for this as we are doing in the memberForm
       })
       .addCase(archiveMember.rejected, (state, { payload }) => {
         state.loading = false;
@@ -651,16 +664,6 @@ export const userSlice = createSlice({
         state.selected = payload.data;
       })
       .addCase(getSelectedMembers.rejected, (state, { payload }) => {
-        state.loading = false;
-        toast.error(payload.message, { autoClose: 1000 });
-      })
-      .addCase(getHistory.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(getHistory.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(getHistory.rejected, (state, { payload }) => {
         state.loading = false;
         toast.error(payload.message, { autoClose: 1000 });
       });

@@ -1,58 +1,103 @@
 import mongoose from "mongoose";
+const Schema = mongoose.Schema;
 
-const memberSchema = new mongoose.Schema(
+const memberSchema = new Schema(
   {
     name: {
       type: String,
       required: true,
-    },
-    address: {
-      type: String,
-      required: true,
-    },
-    location: {
-      type: String,
-    },
-    phone: {
-      type: Number,
-      required: true,
-      unique: true,
-    },
-    info: {
-      type: String,
-      required: true,
-    },
-    company: {
-      type: String,
+      trim: true,
     },
     dob: {
       type: Date,
     },
-    gift1: {
+    phone: {
       type: String,
+      required: true,
+      trim: true,
     },
-    gift2: {
+    location: {
       type: String,
+      trim: true,
     },
-    gift3: {
+    address: {
       type: String,
+      required: true,
+      trim: true,
     },
-    deliveryPerson: String,
-    confirmDelivery: Boolean,
-    onDeliveryNote: String,
-    deliveryDate: Date,
-    isArchived: Boolean,
+
+    // Gifters Status
+    gifters: {
+      EPCORN: { type: Boolean, default: false },
+      FJQ: { type: Boolean, default: false },
+      SFQ: { type: Boolean, default: false },
+      STQ: { type: Boolean, default: false },
+      SWT: { type: Boolean, default: false },
+    },
+
+    // Gift and Site Details - Dynamic Structure
+    gifts: {
+      foodHamper: {
+        type: String,
+        trim: true,
+        default: "na",
+      },
+      liquid: {
+        type: String,
+        trim: true,
+        default: "na",
+      },
+      gift: {
+        type: String,
+        trim: true,
+        default: "na",
+      },
+      additionalGifts: {
+        type: String,
+        trim: true,
+      },
+    },
+
+    // Company Information
+    company: {
+      type: String,
+      trim: true,
+    },
+    info: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // Member Status
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
+    deliveryStatus: {
+      deliveryPerson: { type: String },
+      deliveryDate: { type: Date },
+      confirmDelivery: { type: Boolean, default: false },
+      onDeliveryNote: { type: String },
+    },
     createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: String,
+      required: true,
     },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    strict: false,
+    versionKey: false,
+    strictPopulate: false,
   }
 );
+
+// Index for common queries
+memberSchema.index({ name: 1 });
+memberSchema.index({ phone: 1 });
+memberSchema.index({ isArchived: 1 });
+memberSchema.index({ company: 1 });
 
 const MemberHistorySchema = new mongoose.Schema({
   memberId: {

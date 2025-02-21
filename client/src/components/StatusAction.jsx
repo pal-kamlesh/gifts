@@ -16,12 +16,15 @@ export default function StatusAction({ onClose }) {
   const { scratchPad } = useSelector((state) => state.user);
   const {
     _id,
-    deliveryPerson,
     name,
-    confirmDelivery,
-    deliveryDate,
-    onDeliveryNote,
+    deliveryStatus: {
+      deliveryPerson,
+      confirmDelivery,
+      deliveryDate,
+      onDeliveryNote,
+    },
   } = scratchPad;
+
   const [deliveryData, setDeliveryData] = useState({
     deliveryDate: "",
     deliveryPerson: "",
@@ -30,11 +33,12 @@ export default function StatusAction({ onClose }) {
   });
   const { loading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
+
   useEffect(() => {
     setDeliveryData((data) => ({
       ...data,
       deliveryPerson: deliveryPerson,
-      confirmDelivery: confirmDelivery,
+      confirmDelivery: confirmDelivery ? confirmDelivery : false,
       onDeliveryNote: onDeliveryNote,
       deliveryDate: deliveryDate
         ? new Date(deliveryDate).toISOString().split("T")[0]

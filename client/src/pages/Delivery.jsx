@@ -12,7 +12,7 @@ const Delivery = () => {
   useEffect(() => {
     dispatch(getSelectedMembers());
   }, [dispatch]);
-
+  console.log(selected);
   useEffect(() => {
     switch (filterStatus) {
       case "all":
@@ -21,14 +21,18 @@ const Delivery = () => {
       case "pending":
         setFilteredData(
           selected.filter(
-            (data) => data.deliveryDate !== "" && !data.confirmDelivery // Fixed typo here
+            (data) =>
+              data.deliveryStatus.deliveryDate !== "" &&
+              !data.deliveryStatus.confirmDelivery
           )
         );
         break;
       case "delivered":
         setFilteredData(
           selected.filter(
-            (data) => data.deliveryDate !== "" && data.confirmDelivery // Fixed typo here
+            (data) =>
+              data.deliveryStatus.deliveryDate !== "" &&
+              data.deliveryStatus.confirmDelivery
           )
         );
         break;

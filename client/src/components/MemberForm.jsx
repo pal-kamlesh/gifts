@@ -1,5 +1,4 @@
 import { useDispatch, useSelector } from "react-redux";
-import { shouldDisable } from "../functiion.js";
 import { Spinner } from "flowbite-react";
 import {
   addMember,
@@ -13,34 +12,13 @@ import {
 import { unwrapResult } from "@reduxjs/toolkit";
 const MemberForm = () => {
   const dispatch = useDispatch();
-  const { scratchPad, currentUser, loading, updateMode } = useSelector(
+  const { scratchPad, loading, updateMode } = useSelector(
     (state) => state.user
   );
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Create a FormData object from the form
-    const formData = new FormData(e.target);
-
-    const obj = {
-      name: formData.get("name") ?? "",
-      dob: formData.get("dob") ?? "",
-      address: formData.get("address") ?? "",
-      phone: formData.get("phone") ?? "",
-      location: formData.get("location") ?? "",
-      info: formData.get("info") ?? "",
-      gift1: formData.get("gift1") ?? "",
-      gift2: formData.get("gift2") ?? "",
-      gift3: formData.get("gift3") ?? "",
-      recived: formData.get("recived") ?? false,
-      company: formData.get("company") ?? "",
-      employeeName: formData.get("employeeName") ?? "",
-      delivered: formData.get("delivered") ?? false,
-      deliveryDate: formData.get("deliveryDate") ?? "",
-      isArchived: formData.get("isArchived") ?? false,
-    };
     try {
-      dispatch(addMember(obj));
+      dispatch(addMember(scratchPad));
     } catch (error) {
       console.error("Error:", error);
     }
@@ -50,24 +28,24 @@ const MemberForm = () => {
     const { name, value, type, checked } = e.target;
     handleChange({
       target: {
-        name: `${parentKey}.${name}`,
+        name,
         value: type === "checkbox" ? checked : value,
+        parentKey,
       },
     });
   };
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    dispatch(handleInputs({ name, value }));
+    const { name, value, parentKey } = e.target;
+    dispatch(handleInputs({ name, value, parentKey }));
   };
   // eslint-disable-next-line no-unused-vars
   async function handleArchiveMember(id) {
     const result = await dispatch(archiveMember({ id }));
-    const data = unwrapResult(result);
-    if (data) {
-      filterSetMember(id, data.member);
-    }
+    const data = await unwrapResult(result);
+    dispatch(
+      handleInputs({ name: "isArchived", value: data.member.isArchived })
+    );
   }
-  const filterSetMember = () => {};
   function submitUpdate(id, member) {
     dispatch(updateMember({ id, scratchPad: member }));
   }
@@ -93,7 +71,6 @@ const MemberForm = () => {
                 value={scratchPad.name}
                 onChange={handleChange}
                 required
-                disabled={shouldDisable(currentUser.rights, "name")}
               />
             </label>
             <label className="flex flex-col">
@@ -108,7 +85,6 @@ const MemberForm = () => {
                     : ""
                 }
                 onChange={handleChange}
-                disabled={shouldDisable(currentUser.rights, "dob")}
               />
             </label>
             <label className="flex flex-col">
@@ -121,7 +97,6 @@ const MemberForm = () => {
                 value={scratchPad.phone}
                 onChange={handleChange}
                 required
-                disabled={shouldDisable(currentUser.rights, "phone")}
               />
             </label>
             <label className="flex flex-col">
@@ -133,7 +108,6 @@ const MemberForm = () => {
                 className="form-input mt-1 rounded border-gray-300"
                 value={scratchPad.location}
                 onChange={handleChange}
-                disabled={shouldDisable(currentUser.rights, "location")}
               />
             </label>
             <label className="md:col-span-2 flex flex-col">
@@ -145,7 +119,6 @@ const MemberForm = () => {
                 value={scratchPad.address}
                 onChange={handleChange}
                 required
-                disabled={shouldDisable(currentUser.rights, "address")}
               />
             </label>
           </div>
@@ -163,40 +136,38 @@ const MemberForm = () => {
                   className="form-checkbox mt-1 rounded border-gray-300 cursor-pointer"
                   checked={scratchPad.gifters[gifter]}
                   onChange={(e) => handleNestedChange(e, "gifters")}
-                  disabled={shouldDisable(
-                    currentUser.rights,
-                    `gifters.${gifter}`
-                  )}
                 />
               </label>
             ))}
           </div>
         </fieldset>
-        <fieldset className="border rounded-md p-1">
-          <legend className="px-2 font-bold text-purple-600">
-            Member Action
-          </legend>
-          <div className="flex justify-evenly items-center">
-            <label className="flex gap-2">
-              Archive Member
-              <input
-                type="checkbox"
-                name="isArchived"
-                className={`form-input mt-1 rounded border-gray-300 ${
-                  scratchPad.isArchived
-                    ? "cursor-not-allowed"
-                    : "cursor-pointer"
-                }`}
-                checked={scratchPad.isArchived}
-                value={scratchPad.isArchived}
-                disabled={scratchPad.isArchived}
-                onChange={() => {
-                  handleArchiveMember(scratchPad._id);
-                }}
-              />
-            </label>
-          </div>
-        </fieldset>
+        {updateMode && (
+          <fieldset className="border rounded-md p-1">
+            <legend className="px-2 font-bold text-purple-600">
+              Member Action
+            </legend>
+            <div className="flex justify-evenly items-center">
+              <label className="flex gap-2">
+                Archive Member
+                <input
+                  type="checkbox"
+                  name="isArchived"
+                  className={`form-input mt-1 rounded border-gray-300 ${
+                    scratchPad.isArchived
+                      ? "cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}
+                  checked={scratchPad.isArchived}
+                  value={scratchPad.isArchived}
+                  disabled={scratchPad.isArchived}
+                  onChange={() => {
+                    handleArchiveMember(scratchPad._id);
+                  }}
+                />
+              </label>
+            </div>
+          </fieldset>
+        )}
       </div>
 
       <div className="flex-1 space-y-4">
@@ -212,7 +183,6 @@ const MemberForm = () => {
                 className="form-input mt-1 rounded border-gray-300"
                 value={scratchPad.gifts.foodHamper}
                 onChange={(e) => handleNestedChange(e, "gifts")}
-                disabled={shouldDisable(currentUser.rights, "gifts.foodHamper")}
               >
                 <option value="na">NA</option>
                 <option value="cake">Cake</option>
@@ -228,7 +198,6 @@ const MemberForm = () => {
                 className="form-input mt-1 rounded border-gray-300"
                 value={scratchPad.gifts.liquid}
                 onChange={(e) => handleNestedChange(e, "gifts")}
-                disabled={shouldDisable(currentUser.rights, "gifts.liquid")}
               >
                 <option value="na">NA</option>
                 <option value="scotch">Scotch</option>
@@ -244,7 +213,6 @@ const MemberForm = () => {
                 className="form-input mt-1 rounded border-gray-300"
                 value={scratchPad.gifts.gift}
                 onChange={(e) => handleNestedChange(e, "gifts")}
-                disabled={shouldDisable(currentUser.rights, "gifts.gift")}
               >
                 <option value="na">NA</option>
                 <option value="article1">Article 1</option>
@@ -260,10 +228,6 @@ const MemberForm = () => {
                 className="form-textarea mt-1 rounded border-gray-300"
                 value={scratchPad.gifts.additionalGifts}
                 onChange={(e) => handleNestedChange(e, "gifts")}
-                disabled={shouldDisable(
-                  currentUser.rights,
-                  "gifts.additionalGifts"
-                )}
               />
             </label>
           </div>
@@ -283,20 +247,18 @@ const MemberForm = () => {
                 className="form-input mt-1 rounded border-gray-300"
                 value={scratchPad.company}
                 onChange={handleChange}
-                disabled={shouldDisable(currentUser.rights, "company")}
               />
             </label>
             <label className="flex flex-col">
               Additional Info
               <input
                 type="text"
-                name="additionalInfo"
+                name="info"
                 placeholder="Enter additional info"
                 className="form-input mt-1 rounded border-gray-300"
-                value={scratchPad.additionalInfo}
+                value={scratchPad.info}
                 onChange={handleChange}
                 required
-                disabled={shouldDisable(currentUser.rights, "additionalInfo")}
               />
             </label>
           </div>

@@ -5,47 +5,9 @@ import MemberHistoryService from "../utils/function.js";
 export const addMember = async (req, res, next) => {
   try {
     const id = req.user.id;
-    const {
-      name,
-      dob,
-      address,
-      phone,
-      location,
-      info,
-      gift1,
-      gift2,
-      gift3,
-      giftGiven,
-      recived,
-      company,
-      employeeName,
-      delivered,
-      received,
-      deliveryDate,
-      isArchived,
-    } = req.body;
 
     // Create new member instance
-    let newMember = new Member({
-      name,
-      dob,
-      address,
-      phone,
-      location,
-      info,
-      gift1,
-      gift2,
-      gift3,
-      giftGiven,
-      recived,
-      company,
-      employeeName,
-      delivered,
-      received,
-      deliveryDate,
-      isArchived,
-      createdBy: id,
-    });
+    let newMember = new Member({ ...req.body, createdBy: req.user.username });
     await newMember.save();
 
     newMember = await newMember.populate({
@@ -312,14 +274,11 @@ export const updateDelivery = async (req, res, next) => {
     const { deliveryPerson, confirmDelivery, onDeliveryNote, deliveryDate } =
       req.body;
     const { id } = req.params;
-    const member = await Member.findById(id).populate({
-      path: "createdBy",
-      select: "-password -_id -rights -__v",
-    });
-    member.deliveryPerson = deliveryPerson;
-    member.confirmDelivery = confirmDelivery;
-    member.deliveryDate = deliveryDate;
-    member.onDeliveryNote = onDeliveryNote;
+    const member = await Member.findById(id);
+    member.deliveryStatus.deliveryPerson = deliveryPerson;
+    member.deliveryStatus.confirmDelivery = confirmDelivery;
+    member.deliveryStatus.deliveryDate = deliveryDate;
+    member.deliveryStatus.onDeliveryNote = onDeliveryNote;
     await member.save();
     await MemberHistoryService.recordChange(
       member._id,
@@ -438,11 +397,17 @@ export const selectedMembers = async (req, res, next) => {
     next(error);
   }
 };
+
 export const getHistory = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const data = await MemberHistory.find({ memberId: id });
-    res.status(200).json({ data });
+    const member = await Member.findById(id).populate("history").lean(); // Converts Mongoose document to a plain object
+
+    if (!member) {
+      return res.status(404).json({ message: "Member not found" });
+    }
+
+    res.status(200).json({ member });
   } catch (error) {
     next(error);
   }
