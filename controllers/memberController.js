@@ -32,11 +32,21 @@ export const addMember = async (req, res, next) => {
 export const getMember = async (req, res, next) => {
   //send members with slected field set
   try {
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const totalMembers = await Member.countDocuments();
+
     const members = await Member.find()
       .populate({ path: "createdBy", select: "-password -_id -rights -__v" })
       .populate({
         path: "history",
-      });
+      })
+      .sort({ updatedAd: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+    const totalPages = Math.ceil(totalMembers / limit);
+
     const sM = await Selected.findOne({}).limit(1);
     const selectedMemberIds = sM
       ? new Set(sM.selectedMembers.map((item) => item.memberId.toString()))
@@ -45,9 +55,13 @@ export const getMember = async (req, res, next) => {
       ...member.toObject(),
       selected: selectedMemberIds.has(member._id.toString()),
     }));
-    res
-      .status(200)
-      .json({ message: "all members", data: memberWithSelctionStatus });
+    res.status(200).json({
+      message: "all members",
+      data: memberWithSelctionStatus,
+      totalMembers,
+      totalPages,
+      currentPage: page,
+    });
   } catch (error) {
     next(error);
   }
@@ -64,11 +78,11 @@ export const updateMember = async (req, res, next) => {
       phone,
       location,
       info,
-      gift1,
-      gift2,
-      gift3,
       company,
       isArchived,
+      gifters,
+      gifts,
+      deliveryStatus,
     } = req.body.scratchPad;
     let oldMember = await Member.findById(id).populate({
       path: "createdBy",
@@ -83,18 +97,19 @@ export const updateMember = async (req, res, next) => {
     oldMember.phone = phone;
     oldMember.location = location;
     oldMember.info = info;
-    oldMember.gift1 = gift1;
-    oldMember.gift2 = gift2;
-    oldMember.gift3 = gift3;
     oldMember.company = company;
     oldMember.isArchived = isArchived;
-    oldMember.createdBy = req.user.id;
+    oldMember.gifters = gifters;
+    oldMember.gifts = gifts;
+    oldMember.deliveryStatus = deliveryStatus;
+    oldMember.createdBy = req.user.username;
+
     await oldMember.save();
     await MemberHistoryService.recordChange(
       oldMember._id,
       oldMember,
       "Member updated",
-      req.user.id
+      req.user.username
     );
     res.status(200).json({ message: "Member updated", member: oldMember });
   } catch (error) {

@@ -5,16 +5,24 @@ const memberSchema = new Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, "Name is required."],
       trim: true,
     },
     dob: {
       type: Date,
+      validate: {
+        validator: function (v) {
+          return v < new Date(); // Ensure DOB is not in future
+        },
+        message: "Date of birth cannot be in the future.",
+      },
     },
     phone: {
       type: String,
-      required: true,
+      required: [true, "Phone number is requied"],
       trim: true,
+      unique: true,
+      match: [/^\d{10,15}$/, "Phone number must be between 10 to 15 digits."],
     },
     location: {
       type: String,
@@ -22,7 +30,7 @@ const memberSchema = new Schema(
     },
     address: {
       type: String,
-      required: true,
+      required: [true, "Address is requied"],
       trim: true,
     },
 
@@ -65,7 +73,6 @@ const memberSchema = new Schema(
     },
     info: {
       type: String,
-      required: true,
       trim: true,
     },
 
@@ -75,19 +82,19 @@ const memberSchema = new Schema(
       default: false,
     },
     deliveryStatus: {
-      deliveryPerson: { type: String },
+      deliveryPerson: { type: String, trim: true },
       deliveryDate: { type: Date },
       confirmDelivery: { type: Boolean, default: false },
-      onDeliveryNote: { type: String },
+      onDeliveryNote: { type: String, trim: true },
     },
     createdBy: {
       type: String,
       required: true,
+      trim: true,
     },
   },
   {
     timestamps: true,
-    strict: false,
     versionKey: false,
     strictPopulate: false,
   }

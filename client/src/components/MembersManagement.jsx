@@ -10,21 +10,39 @@ import {
 import { useLocation } from "react-router-dom";
 import { Loading } from "./index.js";
 import MemberForm from "./MemberForm.jsx";
+import { Pagination } from "flowbite-react";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 export default function MembersManagement({ memberData: allMembers }) {
   const { loading, openModal } = useSelector((state) => state.user);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+  const onPageChange = (page) => setCurrentPage(page);
+
   const dispatch = useDispatch();
   const { pathname } = useLocation();
   const [tab, setTab] = useState("");
+
   useEffect(() => {
     if (pathname) {
       setTab(pathname.slice(1));
     }
   }, [pathname]);
-
+  const fetchMembers = async () => {
+    try {
+      const response = await dispatch(
+        getAllMembers({ page: currentPage, limit })
+      );
+      const data = await unwrapResult(response);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error(`Failed to fetch services`, error);
+    }
+  };
   useEffect(() => {
-    dispatch(getAllMembers());
-  }, []);
+    fetchMembers();
+  }, [currentPage]);
 
   function setMemberToEdit(id) {
     dispatch(moveMemberToScratchPad(id));
@@ -41,6 +59,7 @@ export default function MembersManagement({ memberData: allMembers }) {
   if (loading) {
     return <Loading />;
   }
+
   return (
     <div className=" flex justify-center w-full mx-auto ">
       <div>
@@ -73,6 +92,17 @@ export default function MembersManagement({ memberData: allMembers }) {
           }`}
         >
           <ExcelTable members={allMembers} fn={setMemberToEdit} />
+          <div className="flex overflow-x-auto sm:justify-center">
+            <Pagination
+              layout="pagination"
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+              previousLabel="Go back"
+              nextLabel="Go forward"
+              showIcons
+            />
+          </div>
         </div>
       </div>
     </div>

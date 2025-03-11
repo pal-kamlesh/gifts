@@ -185,8 +185,11 @@ export const deleteUser = createAsyncThunk(
 export const getAllMembers = createAsyncThunk(
   "get/members",
   async (data, { rejectWithValue }) => {
+    const { page, limit } = data;
     try {
-      const response = await fetch(`/api/v1/member/get`);
+      const response = await fetch(
+        `/api/v1/member/get?page=${page}&limit=${limit}`
+      );
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData);
